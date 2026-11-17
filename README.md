@@ -1,12 +1,17 @@
 # Gordongecko
 
-A Claude skill that works through a trade idea like a disciplined trading desk:
+A Claude skill with two modes on Robinhood's official Trading connector:
+
+- **Trade Planner** - one trade idea, step by step, and you approve every order (below).
+- **SILAS Desk** - the automated weekday cash-equity day-trading desk with hard risk floors (50% bank stop, 5% max loss per trade, flat before the close). See the Mode B section of `SKILL.md`, `reference/` and `scripts/README.md`.
+
+## Trade Planner
 
 1. **Market regime**: scores S&P 500 breadth (share of stocks above their 200-day average) and sets a risk multiplier.
 2. **Setup read**: chart or quote check, support/resistance, earnings flag.
 3. **Size and gate**: sizes from dollar risk, caps by position size and portfolio heat, and returns PASS/FAIL.
 4. **Trade ticket**: one clear table.
-5. **Execute (optional)**: if the [Trayd](https://github.com/trayders/trayd-mcp) connector is linked to Robinhood, it places a **limit** order only after you say yes.
+5. **Execute (optional)**: through Robinhood's Trading connector it previews the order, then places a **limit** order only after you say yes.
 6. **Journal**: saves the plan for review after the trade.
 
 Run it with `/gordongecko`, or ask "plan a trade on NVDA".
@@ -45,6 +50,7 @@ Risk $71.50 (0.715%), regime x0.75, heat after trade 0.71%
 
 ## Credits
 
+SILAS Desk: Kevin's own desk, merged in 2026-11-17.
 Breadth data: [tradermonty/market-breadth-analysis](https://tradermonty.github.io/market-breadth-analysis/). Workflow inspired by [tradermonty/claude-trading-skills](https://github.com/tradermonty/claude-trading-skills) (MIT). Gordongecko's code is original.
 
 ## Disclaimer
