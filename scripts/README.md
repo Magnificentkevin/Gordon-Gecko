@@ -140,6 +140,14 @@ python3 paper_guard.py audit --orders LIVE_ORDERS.json [--since ISO]
 In paper mode, `paper_guard` must fail any live write tool. The
 premarket self-test is the 22-check suite cited in the 09:20 PAPER line.
 
+### paper_setup.sh
+
+```
+bash scripts/paper_setup.sh <start_cash_usd> [baseline_date]
+```
+
+Builds a PAPER-ONLY desk under `/workspace` from this repo: paper config (`executionMode=paper`, `liveMode.armed=false`), bank-stop baseline = start cash, fresh paper broker book. Live order tools stay blocked by `paper_guard.py`.
+
 ## Broker call shape
 
 Use the broker MCP (e.g. Robinhood) with `account_number` set from
