@@ -97,7 +97,8 @@ def cmd_trade_cap(a):
 
 # ---------- 2) bank drawdown system stop ----------
 def baseline(C):
-    b = bs_cfg(C); base = num(b.get("baselineUsd"), 100.00)  # illustrative default; override from config; since = b.get("baselineDate") or "2026-11-11"; flows = []
+    b = bs_cfg(C); base = num(b.get("baselineUsd"), 100.00)  # illustrative default; override from config
+    since = b.get("baselineDate") or "2026-11-11"; flows = []
     wk = jload(b.get("weekDeskFile") or "/workspace/robinhood-fable-agent/data/equity-paper/week-desk.json", {}) or {}
     seen = set()
     for r in list(C.get("deposits") or []) + list(wk.get("deposits") or []) + list(b.get("cashFlows") or []):
