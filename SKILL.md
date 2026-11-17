@@ -30,7 +30,7 @@ reference/*.md (others)      Mode B: SILAS procedures and rules
 config/example-config.json   Mode B: sanitized SILAS config
 ```
 
-If the folder is not present (for example the skill was saved without its files), clone it:
+All scripts, procedures and config live in https://github.com/Magnificentkevin/Gordon-Gecko. If they are not beside this SKILL.md, clone the repo and work from it:
 
 ```bash
 mkdir -p ~/ext && cd ~/ext && git clone -q --depth 1 https://github.com/Magnificentkevin/Gordon-Gecko.git gordongecko && cd gordongecko
