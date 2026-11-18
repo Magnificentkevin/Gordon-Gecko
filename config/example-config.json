@@ -1999,23 +1999,92 @@
   "minTradesBeforeDecision": 100,
   "setBy": "Kevin 2026-11-17 20:06 ET ('Evaluate using /deep-research and revise'; bank stop 20% + 10% tripwire confirmed)",
   "v2_evidence": {
-   "primarySetup": "orb_breakout",
-   "orb": "buy on break of 5-min opening-range high, price above session VWAP; stop 10% of daily ATR or under range low (must fit within 4.5%); 1% risk; hold to 15:50 flatten",
+   "primarySetup": "orb5_stocks_in_play",
    "minLastPrice": 5.0,
    "minAvgDailyVolume": 1000000,
-   "dayMovePct": [
-    8,
-    15
-   ],
-   "taGate": "RVOL>=1.75 AND price>=session VWAP AND volume-shape (all required); StochRSI/Bollinger/Fibonacci informational only",
-   "trailActivatePct": 5.0,
-   "trail": "max(high-water - 1.5 x ATR5(14), session VWAP, last higher low)",
-   "stallExit": "14 min AND hw<+1% AND (price<VWAP OR below entry-bar low)",
-   "stop": "structural low - max(3 ticks, 0.35 x ATR5(14)), stepped past nearest .00/.50/.x0; skip if stop or 2 x ATR5 > 4.5%",
-   "stopLimitTrigger": 0.96,
+   "stop": "entry - max(0.10 x ATR14, $0.02), stepped off round numbers; the -4.5%/-5% stop-limit backstop stays (owner-locked)",
    "stopLimitLimit": 0.95,
    "recoverySweptLowSupport": true,
-   "flattenSub3At": "15:30"
+   "flattenSub3At": "15:30",
+   "source": "Zarattini, Barbon & Aziz 2024 (5-min stocks-in-play ORB), long side only; Kevin 2026-11-18 10:09 ET ('Keep at it use /deep-research'); source reports/SILAS stock selection and setups.md",
+   "minATR14": 0.5,
+   "rvolDefinition": "first-5-min volume / 14-day average first-5-min volume, computed at 09:35 from get_equity_historicals; pre-list = scannerRecipe2026 stageB without the gap floor",
+   "minRVOL": 1.0,
+   "rankBy": "RVOL",
+   "topN": 20,
+   "maxPositions": 2,
+   "direction": "09:30-09:35 candle must close above its open (else no long)",
+   "entry": "buy-stop-limit at OR high + $0.01, limit = trigger x 1.002, valid 09:35-10:30, cancel at 10:30; shadow-log later touches and a 5-min-close variant",
+   "sizing": "qty = min(floor(equity x 1% x regime mult / risk per share), floor(0.95 x buying power / 2 / price)); skip if < 1",
+   "exit": "hold to 15:50 flatten; no stall exit, no +2% trail, no take-profit floor"
+  },
+  "v1_current_overrides": {
+   "setBy": "Kevin 2026-11-18 10:09 ET ('Keep at it use /deep-research'); source reports/SILAS stock selection and setups.md",
+   "dayMoveCap": "replaced by catalyst classes: any gap size allowed for scheduled earnings/guidance at market cap >= $300M; skip > 25% without confirmed news; skip any sub-$300M name",
+   "vetoes": [
+    "no identifiable news on a >10% move under $1bn cap",
+    "social/press-release spikes",
+    "active shelf or ATM",
+    "any 424B4/424B5 in last 5 days",
+    "S-1/F-1 in progress"
+   ],
+   "minLastPrice": 5.0,
+   "minAvgDailyVolume": 1000000,
+   "selection": "GAP_OPEN >= 4% AND RVOL_TOD >= 2 (replaces the 8% day-move floor)",
+   "firstCandle": "bearish 09:30-09:35 candle = no long",
+   "vwap": "filter only (price >= VWAP when the trigger fires), not an entry trigger",
+   "entryWindow": "09:35-10:30; A+ path to 13:30 removed"
+  },
+  "bothVariants": {
+   "spreadGate": "skip if spread > 1% of price OR spread > 25% of the stop distance; log the ratio",
+   "orWidth": "log OR range / ATR14 and OR range / price; no gate until ~30 triggers (hypothesis: 0.5 x ATR or 4% of price)",
+   "unchanged": "CAUTION regime x0.5, kill switches, one trade per name per day, max 2 concurrent",
+   "measure": "stage counts by time, self-test result, RVOL (paper + TOD), catalyst class, first-candle direction, OR width/ATR, spread/stop, trigger touch time, fill vs trigger, R at 10:30/15:50/stop, MFE/MAE in R, stop slippage, net cost in R and $, counterfactual R for skipped names; promote nothing before 100 triggers, judge on net expectancy after spread"
   }
+ },
+ "scannerRecipe2026": {
+  "setBy": "Kevin 2026-11-18 10:09 ET ('Keep at it use /deep-research'); source reports/SILAS stock selection and setups.md",
+  "doc": "reference/scanner-recipe.md",
+  "retire": [
+   "FILTER_TYPE_GAP (reads the last finished daily candle)",
+   "changeFromCloseAllDayRatio(candlePeriod=\"1d\")",
+   "FILTER_TYPE_RELATIVE_VOLUME / dayVolume/volumeAvg for premarket use"
+  ],
+  "expressions": {
+   "PREV_CLOSE": "close(candleCount=1, candlePeriod=\"1d\", session=\"regular\")",
+   "GAP_LIVE": "tradeAllDay.price / PREV_CLOSE - 1",
+   "GAP_OPEN": "(dayOpenPrice(session=\"regular\") - PREV_CLOSE) / PREV_CLOSE",
+   "EXT_VOL": "dayVolume(session=\"all\") - dayVolume(session=\"regular\")",
+   "ADV20": "volumeAvg(candleCount=20, candlePeriod=\"1d\", session=\"regular\")",
+   "SPREAD_PCT": "quote.spread / tradeAllDay.price",
+   "RVOL_TOD": "dayVolume(session=\"regular\") / (ADV20 * F)  # F = expected fraction of day volume by now, passed in as a constant",
+   "VWAP_DIST": "tradeAllDay.price / dayVwap(session=\"regular\") - 1"
+  },
+  "stageA": {
+   "times": [
+    "07:00",
+    "08:30",
+    "09:15"
+   ],
+   "filters": "STOCK, last 2-500, GAP_LIVE >= 0.04, EXT_VOL >= 50000 (07:00) / >= 100000 (09:15), tradeAllDay.time fresh <= 15 min",
+   "rank": "EXT_VOL / ADV20"
+  },
+  "stageB": {
+   "times": [
+    "09:35",
+    "09:45",
+    "then every 15 min"
+   ],
+   "filters": "GAP_OPEN >= 0.04 (v1 only), regular volume >= 250000, RVOL_TOD >= 2, SPREAD_PCT <= 0.01, last 2-500"
+  },
+  "stageC": "vetoes: get_earnings_calendar / EDGAR 8-K for catalyst class; EDGAR full-text + 424B5 feed for offerings (any 424B4/424B5 in 5 days, S-1/F-1 in progress, active shelf/ATM); market cap >= $300M for v1 extended moves",
+  "selfTest0700": "symbol-scoped scan on 3 known gappers: GAP_LIVE within 0.5 pp of Nasdaq premarket %, dayVolume(session=regular) == 0; on failure use Nasdaq/EDGAR fallbacks and mark the scan untrusted",
+  "openQuestions": [
+   "PREV_CLOSE premarket value",
+   "dayVolume(regular) premarket",
+   "changeFromPostMarketRatio / volumePostMarket",
+   "Stage B count at 09:35",
+   "F curve calibration"
+  ]
  }
 }

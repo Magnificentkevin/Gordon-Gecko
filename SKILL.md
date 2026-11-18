@@ -169,6 +169,12 @@ From `reports/Gordongecko strategy evaluation.md` (deep research; bank stop conf
 | Wash sales | flag any re-buy within 30 days of a losing exit in the recap | not tracked |
 | PDT | rule ended 2026-06-04 (FINRA RN 26-10; SEC Rel. 34-105226); the RT cap is a strategy setting | - |
 
+**Selection and setup revisions (2026-11-18 10:09 ET; `reports/SILAS stock selection and setups.md`).** These supersede the v1 day-move band and the v2 description below:
+- **Scanner:** use `config.scannerRecipe2026` / `reference/scanner-recipe.md`. Never use `FILTER_TYPE_GAP`, `changeFromCloseAllDayRatio(1d)` or the enum relative-volume filter for same-day work (they read the last finished daily candle or reset at the open). Run the 07:00 self-test first.
+- **v1:** $5 floor, ADV >= 1M; select by open gap >= 4% AND time-of-day RVOL >= 2 (no 8% floor); the 25% cap becomes catalyst classes (any gap for earnings/guidance at >= $300M cap; skip > 25% without confirmed news; skip sub-$300M); a bearish first 5-minute candle means no long; VWAP is a filter, not a trigger; entries end 10:30 (A+ path removed).
+- **v2:** a faithful long-only 5-minute stocks-in-play ORB (Zarattini, Barbon & Aziz 2024): price > $5, ADV(14) >= 1M, ATR(14) >= $0.50, first-5-minute RVOL >= 1.0 ranked top 20, bullish first candle, buy-stop at OR high + $0.01 (09:35-10:30), stop = entry - 10% of ATR(14) (the -5% backstop stays), hold to 15:50 with no stall/trail/take-profit. No day-move band.
+- **Both:** skip if spread > 1% of price or > 25% of the stop distance; log OR width; measure everything in R incl. a shadow book of skipped names; promote nothing before 100 triggers. The cited edge is long+short and unslipped; on $120 with whole shares the spread can eat about half of 1R, so this is a test, not a deployment.
+
 **v2 paper test (side by side).** Until Kevin decides after >= 100 paper trades, run two paper books every paper session: `v1_current` (rules above) and `v2_evidence` (`config.paperVariants2026.v2_evidence`: ORB as primary setup, $5 price floor + 1M average daily volume, day-move 8-15%, TA gate = RVOL + VWAP + volume shape, structural/ATR stop stepped past round numbers, stop-limit trigger 0.96, trail from +5% at max(hw - 1.5 x ATR5, VWAP, last higher low), conditional stall exit, swept-low support in recovery, flatten sub-$3 at 15:30). Keep the books apart with `PAPER_BROKER=${DESK_DATA}/paper-mode/broker_v1.json` or `broker_v2.json`. Report both side by side. v2 never trades live until Kevin approves it.
 
 ## Current risk profile: `higher-risk+15`
