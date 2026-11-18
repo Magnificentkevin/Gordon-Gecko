@@ -4,6 +4,7 @@
 > - **Trail:** v1 activates at +2% (`tpModel.params.trailActivatePct` 2.0, as coded). The '+5% floor' activation written below is now the **v2 paper test** (trail at max(hw − 1.5 × ATR5, VWAP, last higher low)).
 > - **Stall exit (v2 test only):** 14 min AND hw < +1% AND (price < VWAP OR below the entry bar's low). v1 unchanged.
 > - **Recovery (v2 test only):** a sweep of a known low by < 1% that is reclaimed within 1–2 bars counts as support. The −3.45% decision point stays Kevin-locked.
+> - **Stall timing (paper finding 2026-11-18):** after every fill, schedule a manage check at exactly entry + 14 minutes (plus the normal cadence). On 11/18 the stall rule first applied at 11:59 but the 15-minute cadence executed it at 12:02 (BRBR exit +$0.05 instead of about -$0.10).
 > - **Approval-required orders** and **60-second near-stop watch**: see risk-rules.md revisions.
 
 
