@@ -1,5 +1,11 @@
 # Self-learning
 
+> **Evaluation revisions 2026-11-17 20:06 ET (supersede conflicting lines below).** Source: `reports/Gordongecko strategy evaluation.md`; bank stop confirmed by Kevin.
+> - Guards raised: `riskProfile.minTradesBeforeTune` 30 (was 6), `selfLearning.minTrades` 30 (was 8), `entryPlaybook.promote/demote.minTrades` 30 (was 10).
+> - **Expectancy gate:** scale size or promote a setup only after ≥ 100 live trades with win % > avgLoss/(avgWin+avgLoss) (`config.expectancyGate`). Decision success is a secondary diagnostic.
+> - v2 bound change for the paper test: `minLastPriceAtEntry` may reach 5.00.
+
+
 The desk is allowed to retune a short list of knobs from its own results,
 inside published bounds, and only after enough evidence. Hard floors and
 the owner-locked decision point never move this way.

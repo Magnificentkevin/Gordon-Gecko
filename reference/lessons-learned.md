@@ -151,3 +151,7 @@ Twin manage crons used to swap a stop and a take-profit or race flatten
 (403 "cannot be cancelled" / "not enough shares"). The single 5-minute
 routine, the 120-second per-symbol order lock, and the no-retry-on-403
 rule are the fix. Do not bring back parallel manage crons.
+
+
+## 2026-11-17 LUCK paper trade (Mode A): stop at the crowd's level
+Bought 5 @ $4.11 with the stop at $3.94, exactly the morning low. An 11:30 dip to $3.91-3.92 swept it (-$0.85, -1R), then LUCK recovered to $4.14. Lesson: place the stop beyond the obvious level (a few ticks or ~0.35 x ATR5 past it, stepped past .00/.50) and derive the entry from it: max buy = stop / 0.95. A stop at $3.89 needed a buy at or below $4.09; moving the stop to $3.89 from a $4.11 entry would have broken the 5% cap (5.35%). Never widen the stop to fit the entry.

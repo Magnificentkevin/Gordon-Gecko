@@ -1,5 +1,15 @@
 # Risk rules
 
+> **Evaluation revisions 2026-11-17 20:06 ET (supersede conflicting lines below).** Source: `reports/Gordongecko strategy evaluation.md`; bank stop confirmed by Kevin.
+> - **Bank stop:** stop at 80% of baseline (20% drawdown), tripwire at 90% (alert Kevin, halve size via `sizeMultiplier` 0.5, owner review). Was 50%. `config.bankStop.thresholdPct` 80, `tripwirePct` 90.
+> - **Sizing:** 1% of equity at risk to the −5% stop, 2% max, capped at 95% of buying power (`discretion.riskSizing`, `discretion.py size --equity --cash`). Replaces full-cash sizing.
+> - **Day kill:** −3% day (was −5%); 2 consecutive losing stops unchanged. **Round trips:** 4 a day (was 9).
+> - **Account:** `limited_margin`, not a cash account. May buy with unsettled sale proceeds; never borrow, never create a debit, never short. Check `get_accounts` type each fire; if not `limited_margin`, no same-day recycling. PDT ended 2026-06-04 (FINRA RN 26-10).
+> - **Order checks:** debit / excess obligation / good-faith / freeriding / 90-day / day-trade text = hard stop, escalate.
+> - **Stop monitoring:** bid within 1% of trigger or a triggered-unfilled stop → 60-second watch; backstop exit = marketable limit at bid × 0.97 after checking halt/LULD state. Losses can exceed 5% on gaps and halts.
+> - **Approval-required orders:** occupy a slot, never duplicated, cancel at next fire if pending (15:50 latest); a pending protective stop = unprotected (floor 9).
+
+
 Two layers: **hard floors** (owner-locked, never auto-tuned) and the
 **adjustable profile** (currently `higher-risk+15`). If a procedure, helper,
 or older config line disagrees with a hard floor, the floor wins. If it

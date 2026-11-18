@@ -1,5 +1,10 @@
 # Entries and TA
 
+> **Evaluation revisions 2026-11-17 20:06 ET (supersede conflicting lines below).** Source: `reports/Gordongecko strategy evaluation.md`; bank stop confirmed by Kevin.
+> - **Spread** ≤ 1.0% (was 8%). **Dilution veto:** offerings plus any effective shelf (S-3/F-3) or ATM program with remaining capacity. **Regime:** no new buys when `gecko_regime.py` is DEFENSIVE/UNKNOWN; log the label on each trade.
+> - **v2 paper variant** (`paperVariants2026.v2_evidence`, paper only): ORB primary, $5 floor + 1M ADV, day-move 8–15%, TA gate RVOL + VWAP + volume shape (StochRSI/Bollinger/Fibonacci informational), stop = structural low − max(3 ticks, 0.35 × ATR5) stepped past .00/.50, skip if > 4.5%.
+
+
 The current profile (`higher-risk+15`) supersedes older 4/5 or 5/5 TA
 lines and older cutoffs that may still appear lower in procedure files.
 

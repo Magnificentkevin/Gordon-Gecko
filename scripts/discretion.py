@@ -277,7 +277,19 @@ def size(a):
     stop = up(a.buy_limit * 0.95)   # risk to the −5% hard-stop limit (Kevin 16:28)
     risk = a.buy_limit - stop
     if s["mode"] != "protect":
-        print(json.dumps({"mode": s["mode"], "protectCap": None, "note": "normal sizing (SIZING lock)"}, indent=1)); return
+        # RISK-BASED SIZING (Kevin 2026-11-17 20:06 ET, evaluation item 2; replaces full-cash sizing):
+        # qty = floor(equity × riskPct / (buy_limit − stop)), capped by cash × 0.95 / buy_limit; skip if 1 share > maxRiskPct of equity.
+        rs = cfg().get("riskSizing", {}); rp = num(rs.get("riskPct"), 1.0); mx = num(rs.get("maxRiskPct"), 2.0); cf = num(rs.get("cashCapFrac"), 0.95)
+        eq = a.equity if a.equity else num(s.get("startBank"), 0.0); cash = a.cash if a.cash is not None else eq
+        mult = a.size_mult if a.size_mult else 1.0
+        if eq <= 0 or risk <= 0:
+            print(json.dumps({"mode": s["mode"], "skip": True, "skipReason": "no_equity_or_risk"}, indent=1)); return
+        q_risk = int(math.floor(eq * rp / 100 * mult / risk)); q_cash = int(math.floor(cash * cf / a.buy_limit))
+        one_share_pct = risk / eq * 100; q = min(q_risk, q_cash)
+        skip = one_share_pct > mx or q < 1
+        print(json.dumps({"mode": s["mode"], "sizing": "risk", "riskPct": rp * mult, "equityUsd": eq, "cashUsd": cash, "riskPerShare": round(risk, 4),
+                          "qtyByRisk": q_risk, "qtyByCash": q_cash, "maxQty": 0 if skip else q, "riskUsd": round((0 if skip else q) * risk, 2),
+                          "skip": skip, "skipReason": ("one_share_exceeds_max_risk" if one_share_pct > mx else "rounds_to_zero") if skip else None}, indent=1)); return
     room = s["lockedPnlUsd"] - s["lockFloorUsd"]
     qmax = int(math.floor(room / risk)) if risk > 0 and room > 0 else 0
     print(json.dumps({"mode": "protect", "roomAboveFloorUsd": round(room, 4), "riskPerShare": round(risk, 4), "maxQty": qmax,
@@ -288,6 +300,7 @@ x = sp.add_parser("status"); x.add_argument("--state", required=True); x.add_arg
 h = sp.add_parser("hold"); h.add_argument("--fill", type=float, required=True); h.add_argument("--bid", type=float, required=True); h.add_argument("--vwap", type=float, required=True)
 h.add_argument("--resting-stop", type=float, required=True); h.add_argument("--resting-mode", default="stop"); h.add_argument("--fractional-path")
 z = sp.add_parser("size"); z.add_argument("--state", required=True); z.add_argument("--quotes"); z.add_argument("--now"); z.add_argument("--ask", type=float, required=True); z.add_argument("--buy-limit", type=float, required=True)
+z.add_argument("--equity", type=float, help="live total equity (get_portfolio)"); z.add_argument("--cash", type=float, help="live buying power"); z.add_argument("--size-mult", type=float, help="0.5 when the bank tripwire is hit")
 g = sp.add_parser("gate"); g.add_argument("--symbol"); g.add_argument("--last", type=float, required=True); g.add_argument("--day-pct", type=float)
 g.add_argument("--mode", default="entry", choices=["entry", "recycle"]); g.add_argument("--filings", help="comma list of today's forms, e.g. 'SC TO-I,8-K:1.01,424B5'")
 g.add_argument("--setup", help="gap_and_go|early_momentum|orb_breakout|vwap_reclaim|momentum_pullback|recycle_bounce|midday_momentum (default: inferred)"); g.add_argument("--watchlist-score", type=float); g.add_argument("--ta-pass", type=int)

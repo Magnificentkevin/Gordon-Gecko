@@ -1,1920 +1,2021 @@
 {
-  "name": "equity-am-desk-example",
-  "mode": "live_cash",
-  "sessionDate": "YYYY-MM-DD",
-  "weekStart": "2026-11-16",
-  "weekEnd": "2026-11-20",
-  "premarketScanEt": "05:30",
-  "tradeWindowEt": {
-    "start": "09:30",
-    "end": "15:50"
+ "name": "equity-am-desk-example",
+ "mode": "live_cash",
+ "sessionDate": "YYYY-MM-DD",
+ "weekStart": "2026-11-16",
+ "weekEnd": "2026-11-20",
+ "premarketScanEt": "05:30",
+ "tradeWindowEt": {
+  "start": "09:30",
+  "end": "15:50"
+ },
+ "stopLossPct": -3.45,
+ "takeProfitPct": 2.0,
+ "maxPositions": 2,
+ "shortlistSize": 10,
+ "shortlistSource": "whole_market_composite",
+ "shortlistRankBy": "composite",
+ "entryFilters": {
+  "minRelativeVolume": 1.75,
+  "maxPctChangeAtEntry": 25.0,
+  "minPctChangeAtEntry": 8.0,
+  "skipIfBidAskSpreadPct": 1.0,
+  "preferMidRank": true,
+  "avoidTopPctBlownOff": true,
+  "maxPctChangeAtRecycle": 25.0,
+  "sameSymbolRecycleCoolDayPct": null,
+  "minLastPriceAtEntry": 1.0,
+  "tightSpreadIfLastBelow": 0.25,
+  "tightSpreadMaxPct": 3.0,
+  "skipRecycleIfBidWithinStopPct": 1.0,
+  "allowSameSymbolRecycleIfCriteriaMet": true,
+  "preferSkipJustStoppedSameSession": true,
+  "watchlistExtras": [],
+  "minAvgSharesPer5MinBar": 150000,
+  "minAvgSharesPer5MinBarLookbackBars": 3,
+  "minAvgSharesPer5MinBarAppliesTo": [
+   "entries",
+   "recycles",
+   "jump_scan_adds",
+   "adopted_positions_report_only"
+  ],
+  "bidToStopGapAnchor": "ask_expected_fill",
+  "afterTrailHwGe4LockPct": 1.5,
+  "exitIfBidUnderTpAfterHwGe4ManageTicks": 1,
+  "roundTakeProfitUpToNextCent": true,
+  "preferSkipJustStoppedOnlyIfStillFading": true,
+  "encourageSameSymbolRecycleOnBounce": true,
+  "ta": {
+   "requiredPassCount": 3,
+   "ofChecks": 5,
+   "checks": [
+    "volumeShape",
+    "stochRsi",
+    "vwap",
+    "bollinger",
+    "fibonacci"
+   ],
+   "skipIfIncomplete": true,
+   "taIncompleteAction": "skip_name",
+   "logIn": "entryLiveFilters.ta",
+   "dataSources": {
+    "preferred": [
+     "batched get_equity_historicals 5minute (up to 10 symbols) + ${HELPERS_DIR}/ta.py",
+     "get_equity_technical_indicators (fallback only)"
+    ],
+    "intervalPrefer": "5minute",
+    "intervalFallback": "1minute",
+    "note": "If an indicator is unavailable for a name, mark taIncomplete and skip that name rather than inventing values.",
+    "batchMaxSymbols": 10,
+    "localTaHelper": "${HELPERS_DIR}/ta.py",
+    "minBarCoveragePctForTa": 80.0,
+    "taIncompleteIfCoverageBelow": true
+   },
+   "volumeShape": {
+    "keepRvolMin": 1.5,
+    "keepAvgSharesPer5Min": 150000,
+    "lastComplete5mBarVolGePriorBar": true,
+    "skipIfLastBarVolLtPctOfPrior3BarAvg": 50.0,
+    "note": "Rising or at least not collapsing; skip if last bar vol < 50% of prior 3-bar average."
+   },
+   "stochRsi": {
+    "period": 14,
+    "preferLongWhen": [
+     "k_rising_from_le_30_oversold_bounce",
+     "k_between_30_70_with_higher_lows"
+    ],
+    "skipNewEntryIfKGe": 80.0,
+    "allowOverboughtExceptionIf": "reclaiming_vwap_with_rising_volume",
+    "reHitPreferKTurnedUpFromLe": 40.0,
+    "note": "Longs only. Skip new entry if StochRSI %K >=80 unless reclaiming VWAP with rising volume. On re-hit after pullback prefer %K turned up from <=40."
+   },
+   "vwap": {
+    "session": true,
+    "preferPriceGeVwapForNewEntries": true,
+    "strongestSetup": "reclaim_prior_bar_closed_below_vwap_current_bid_last_back_above_with_rising_volume",
+    "skipIfFadingPctBelowVwapOnFallingVolume": 1.0,
+    "note": "Prefer price >= VWAP (uptrend side). Skip if price fading >1% below VWAP on falling volume."
+   },
+   "bollinger": {
+    "period": 20,
+    "stdDev": 2.0,
+    "intervalPrefer": "5minute",
+    "intervalFallback": "1minute",
+    "prefer": [
+     "near_mid_band",
+     "bounce_off_lower_band_with_stoch_turning_up"
+    ],
+    "skipChaseIfLastAboveUpperAndStochKGe": 80.0,
+    "plus": "squeeze_to_expansion_with_close_above_mid_band",
+    "note": "Prefer entry near mid-band or after bounce off lower with StochRSI turning up. Skip chase if last above upper AND StochRSI >=80."
+   },
+   "fibonacci": {
+    "levelsPct": [
+     23.6,
+     38.2,
+     50.0,
+     61.8
+    ],
+    "preferReHitZonePct": [
+     38.2,
+     61.8
+    ],
+    "impulse": "session_low_to_high_of_move_or_first_30_60m_range",
+    "firstEntryFallbackSwing": "premarket_high_to_open_or_first_15m_high_to_low",
+    "skipFibGateIfNoClearImpulse": true,
+    "noteWhenFibSkipped": "fibPending",
+    "stillRequireWithoutFib": [
+     "vwap",
+     "volumeShape",
+     "stochRsi"
+    ],
+    "preferBidHoldingAboveFibPlus": [
+     "vwap_or_mid_bb"
+    ],
+    "skipReHitIfBreakBelow61_8OnRisingSellVolume": true,
+    "note": "Apple Fibonacci thinking. Prefer re-hit/recycle when price pulls back into 38.2-61.8% then resumes up (bid holding above fib + VWAP or mid-BB). Skip re-hit if breaks below 61.8% on rising sell volume (failed trend).",
+    "passRequiresRetracePctGe": 23.6,
+    "trivialNearHighDoesNotPass": true,
+    "passRequiresRetraceNote": "Fib check only counts as a TA pass if price has retraced \u226523.6% from impulse high; sitting at the high is not a fib pass."
+   },
+   "scoring": {
+    "hardFiltersStillRequired": [
+     "RVOL",
+     "liquidity_150k_5m",
+     "spread",
+     "dayPct",
+     "bidToStop"
+    ],
+    "mustPassAtLeastNOf5TaChecks": 3,
+    "taChecks": [
+     "volumeShape",
+     "stochRsi",
+     "vwap",
+     "bollinger",
+     "fibonacci"
+    ],
+    "logPassedFailedIn": "entryLiveFilters.ta",
+    "mustPassAtLeastNOf5TaChecksFrom1030": 3
+   },
+   "requiredPassCountByTime": [
+    {
+     "fromEt": "09:30",
+     "toEt": "16:00",
+     "requiredPassCount": 3,
+     "tag": "after1000-5of5",
+     "note": "higher-risk 2026-11-13: 3/5 all day (tag kept so desk_learn tunes this entry, step \u00b11 within 3..5)"
+    }
+   ],
+   "lateWindowRule": {
+    "fromEt": "10:30",
+    "toEt": "15:45",
+    "requiredPassCount": 3,
+    "appliesTo": [
+     "entries",
+     "recycles"
+    ],
+    "appliedAt": "2026-10-07T19:50:00-04:00",
+    "revertIf": "revert to \u22653/5 if the 4/5 rule blocks ALL 10:30+ entries for 3 sessions while 3/5-passing candidates would have won (+2% before \u22122%); track lateTaBlockedWouldHaveWon daily",
+    "trackField": "lateTaBlockedWouldHaveWon"
+   },
+   "chaseHardVeto": {
+    "enabled": false,
+    "when": "last_above_upper_bollinger AND stochRsiK >= 80",
+    "action": "hard_skip_regardless_of_3of5_score",
+    "appliedAt": "2026-10-08T17:05:00-04:00",
+    "evidence": "QNME paper 14:57 passed TA 3/5 (volume/VWAP/fib) while StochRSI K=100 and above upper BB \u2014 chase slipped through as a vote",
+    "disabledAt": "2026-10-21T10:13:00-04:00",
+    "disabledBy": "Kevin 10:06 ET 'Remove restrictions on what you trade' (standing)"
+   },
+   "strictFromEt": "09:35",
+   "strictFromEtRevertWindow": {
+    "started": "2026-11-06",
+    "sessions": 5,
+    "sessionsCompleted": 0,
+    "status": "open",
+    "revertTo": "10:00",
+    "baseline3of5ExpectancyR": -0.3,
+    "trackField": "ta4From0935OnlyEntries",
+    "revertIf": "over next 5 sessions, 4/5-only entries (would have been 3/5 under old rule) avg below -0.30R, OR zero entries for 3 sessions \u2192 revert strictFromEt to 10:00",
+    "log": [],
+    "evidenceAtApply": {
+     "week": "2026-11-02..2026-11-05",
+     "entries3of5": "1W/3L (JBLU +0.57; CSIQ -0.40, EOSE -0.72, U -1.02) \u2014 all stops \u22642.5 min, HW=fill",
+     "entries5of5": "AEHR +2.87",
+     "expectedBankGrowthUsdPerWeek": 1.57
+    }
+   },
+   "minRequiredPassCountFloor": 3,
+   "strictMinPassCount": 3
+  },
+  "catalysts": {
+   "enabled": true,
+   "observeOn": [
+    "scan",
+    "entries",
+    "recycles",
+    "jump_scan_adds"
+   ],
+   "dataSources": [
+    "get_sec_filing_index",
+    "get_earnings_calendar",
+    "get_equity_fundamentals",
+    "search"
+   ],
+   "filingTypesToCheck": [
+    "8-K",
+    "6-K",
+    "424B*",
+    "S-1",
+    "S-3",
+    "S-1/A",
+    "S-3/A",
+    "424B3",
+    "424B4",
+    "424B5"
+   ],
+   "logUnder": [
+    "eventFlags",
+    "catalysts"
+   ],
+   "logFields": {
+    "catalystType": "string",
+    "summary": "one_line"
+   },
+   "preferFreshPositive": {
+    "enabled": true,
+    "types": [
+     "contract",
+     "FDA",
+     "earnings_beat",
+     "listing_news",
+     "partnership",
+     "positive_8K",
+     "clinical_progress"
+    ],
+    "note": "Prefer entries WITH a fresh positive catalyst when TA also passes (\u22653/5)."
+   },
+   "downRankOrSkip": {
+    "types": [
+     "dilution",
+     "offering",
+     "ATM",
+     "424B*",
+     "S-1",
+     "S-3",
+     "going_concern",
+     "noncompliance_listing"
+    ],
+    "action": "down_rank_or_skip_even_if_ta_hot",
+    "note": "Down-rank or skip dilution/offering/going-concern catalysts even if TA looks hot."
+   },
+   "reHit": {
+    "recheckCatalystIntact": true,
+    "skipIfCatalystFaded": true,
+    "note": "On re-hit: re-check whether the catalyst is still intact or already faded."
+   },
+   "requiredForEveryCandidate": true,
+   "note": "Kevin Wed 12:35 addendum: observe catalyst reports that may contribute to action. Log catalystType + one-line summary for every shortlist and live entry candidate."
+  },
+  "rvolBaseline": {
+   "method": "median",
+   "lookbackDays": 15,
+   "dropMaxBeforeMeanFallback": true,
+   "timeOfDayAdjust": true,
+   "formula": "todays_volume / (baseline_daily * elapsed_session_fraction)",
+   "neverUseScannerRelativeVolumeColumn": true,
+   "scannerRvolNote": "scanner Relative volume column returned constant 1 on Thu premarket \u2014 always recompute from historicals",
+   "appliedAt": "2026-10-08T17:05:00-04:00",
+   "evidence": "SOAR mean RVOL 0.31 vs median 1.70 with 229k/5m; OLB mean inflated by 766M spike day; scanner column unusable"
+  },
+  "bidToStopEquivalentMaxSpreadPct": 1.0,
+  "bidToStopFreshQuoteRetries": 2,
+  "bidToStopRetryGapSec": 20,
+  "bidToStopNote": "With stop=ask*0.98 and skipRecycleIfBidWithinStopPct=1.0, bid must be > ask*0.9898 \u2248 effective spread \u2264~1.0%. The 8%/3% spread filters are looser and mostly dead code under this gate. Always gate on fresh get_equity_quotes (scanner Bid/Ask can be stale on fast movers: ONCO/QNME). Retry bid-to-stop up to 2 times ~20s apart before rejecting. Anchor remains ask_expected_fill (not padded buy limit).",
+  "minAvgSharesPer5MinBarWindowNote": "SUPERSEDED 2026-11-10 by minAvgSharesPer5MinBarByTime (all-day session). Prior: Keep 150k for live 09:30\u201311:00. Midday/afternoon volume is far below open (Thu paper: 5/9 then 12/15 quote-passers failed). Do not lower below 150k (authority min). Paper afternoon should expect near-zero fills under this floor.",
+  "supersededFrom2026-10-12": {
+   "afterTrailHwGe4LockPct": "superseded by tpModel trailing profit lock",
+   "exitIfBidUnderTpAfterHwGe4ManageTicks": "superseded by tpModel trailing profit lock"
+  },
+  "lateEntryCatalystGate": {
+   "enabled": false,
+   "fromEt": "10:00",
+   "minCatalystScore": 0.4,
+   "appliesTo": [
+    "entries",
+    "recycles",
+    "jump_scan_adds"
+   ],
+   "effectiveFrom": "2026-10-19",
+   "trackField": "lateCatalystBlockedWouldHaveWon",
+   "revertIf": "over 5 sessions from 2026-10-19, >=2 names blocked ONLY by this gate would have hit targetTP (min +2%) before -2% -> set enabled false",
+   "revertWindow": {
+    "started": "2026-10-19",
+    "sessions": 5,
+    "log": [
+     {
+      "date": "2026-10-20",
+      "blockedOnlyByGate": 0,
+      "wouldHaveWon": 0,
+      "note": "dormant (cutoff 10:00)"
+     }
+    ]
+   },
+   "status": "dormant_allday_scalp_2026-11-10",
+   "note": "Kept DORMANT under the all-day session (Kevin 2026-11-10 08:13 'maximize trading speed', fast in-and-out): a catalystScore >= 0.4 gate on every buy after 10:00 would block most midday scalps; TA 4/5 + VWAP + hard gates + dilution skip still apply all day. Revisit if afternoon (>=12:00) entries average below -0.30R over 5 sessions. Prior note: moot while newEntryCutoffEt=10:00; reactivates automatically if cutoff reverts to 10:50",
+   "disabledAt": "2026-11-10T08:40:00-05:00",
+   "disabledBy": "SILAS Bot under Kevin 2026-11-10 08:13 ET all-day scalp instruction (was dormant; prevents silent reactivation now that the cutoff is 15:45)"
+  },
+  "preferPctChangeBand": {
+   "min": 8.0,
+   "max": 15.0,
+   "rank": "names with day move 8-15% rank ahead of 15-25% (ranking bonus, not a gate)",
+   "from": "2026-10-22",
+   "by": "Kevin 2026-10-21 10:58 ET: apply backtest proposals 1,2,6,7 LIVE from Thu 2026-10-22; paper-test 3-5 (report /workspace/silas-quant/backtests/2026-10-21-price-band-budget/report.md)"
+  },
+  "minAvgSharesPer5MinBarByTime": [
+   {
+    "fromEt": "09:30",
+    "toEt": "10:30",
+    "shares": 100000,
+    "dollars": 1500000
+   },
+   {
+    "fromEt": "10:30",
+    "toEt": "11:30",
+    "shares": 100000,
+    "dollars": 1000000
+   },
+   {
+    "fromEt": "11:30",
+    "toEt": "14:00",
+    "shares": 200000,
+    "dollars": 500000
+   },
+   {
+    "fromEt": "14:00",
+    "toEt": "15:00",
+    "shares": 75000,
+    "dollars": 750000
+   },
+   {
+    "fromEt": "15:00",
+    "toEt": "15:45",
+    "shares": 100000,
+    "dollars": 1000000
+   }
+  ],
+  "minAvgSharesPer5MinBarByTimeNote": "All-day session (Kevin 2026-11-10 08:13 ET). The 150k shares / $1.5M per 5m floor was tuned on the 09:30-11:00 open (config minAvgSharesPer5MinBarWindowNote: Thu Oct 8 paper afternoon had 5/9 then 12/15 quote-passers fail the 150k floor -> near-zero midday fills). US intraday volume is U-shaped: per-5m volume midday is roughly 1/3 of the first 30 min and recovers into the close, so the floor scales with time of day: 150k (09:30-10:30) / 100k (10:30-11:30) / 50k minimum (11:30-14:00) / 75k (14:00-15:00) / 100k (15:00-15:45); fractional dollar floor scaled the same ($1.5M/$1.0M/$0.5M/$0.75M/$1.0M). ta.py applies the band (output liqFloor). Our orders are ~$51, so the floor is tape quality, not fill size; the -2% resting stop, bid-to-stop (~1% effective spread) and TA 4/5 gates are unchanged. revertIf: if after 5 sessions trades entered under a band below 150k average below -0.30R or show stop slippage worse than 1% past the stop on 2+ trades -> raise that band by 25k.",
+  "noRebuyAfterLossSameDay": true,
+  "noRebuyAfterLossSameDayNote": "Evidence (all live history 2026-10-06..11-10): 6 same-day re-buys of a symbol that had just closed at a loss \u2192 0 wins, \u2212$2.65 (OPK\u00d72, QTEX, AHT, BW, LCID); first entries 48 trades +$0.81. Recycling a WINNER stays allowed (allowSameSymbolRecycleIfCriteriaMet). Kevin 2026-11-10 16:07 ET: \"Use results for your logic set. Adjust and improve accordingly... Remove all rule sets that hinder reaching goal...\"",
+  "bidToStopPct": -2.0,
+  "bidToStopPctNote": "2026-11-13 higher-risk: ta.py bidToStop spread-equivalent hard filter stays anchored at ask\u00d70.98 (unchanged) even though the soft stop/decision point moved to \u22123%"
+ },
+ "manage": {
+  "pollMinutes": 5,
+  "stopExitMode": "marketable_limit_aggressive",
+  "maxSlippagePastStopPct": 3.0,
+  "trailAfterPlus2Pct": false,
+  "noNewEntriesAfterEt": "15:45",
+  "hardStopEt": "15:50",
+  "trailAfterPlusPct": 2.0,
+  "restTakeProfitLimitOnFill": false,
+  "brokerSync": {
+   "sourceOfTruth": "broker",
+   "reconcileEveryTick": true,
+   "positionsCall": "get_equity_positions(account_number=${BROKER_ACCOUNT_NUMBER})",
+   "ordersCall": "get_equity_orders(account_number=${BROKER_ACCOUNT_NUMBER}, created_at_gte=<today 09:00 ET in UTC>) -> open states: new, queued, confirmed, unconfirmed, partially_filled",
+   "ownAllAgenticEquity": true,
+   "adoptUntracked": {
+    "stopPct": -2.0,
+    "takeProfitPct": 2.0,
+    "anchor": "average_buy_price",
+    "honorExplicitStateStopTp": true,
+    "countsTowardMaxPositions": true,
+    "countsTowardMaxRoundTrips": true,
+    "restTpIfMissing": false,
+    "restStopIfMissing": true,
+    "takeProfitMode": "tpModel targetTP (floor takeProfitPct 2.0) from 2026-10-12"
+   },
+   "dropStateOnlyPositionsNotAtBroker": true,
+   "flattenScope": "all_equity_positions_in_account",
+   "postHardStop": "cancel_all_open_equity_orders_then_sell_all_shares",
+   "cancelBeforeSell": true,
+   "verifyCancelledBeforeSell": true,
+   "sellQtyField": "shares_available_for_sells",
+   "flattenLimitBelowBidPct": [
+    3.0,
+    6.0,
+    10.0,
+    15.0,
+    20.0
+   ],
+   "flattenMaxAttempts": 5,
+   "flattenRetryWaitSeconds": 15,
+   "flattenDoneWhen": "get_equity_positions empty AND zero open equity orders",
+   "flattenNeverDeferToLaterRun": true,
+   "postHardStopVerifyUntilEt": "16:00"
+  },
+  "armRestingStopWhenBidWithinStopPct": 1.0,
+  "restingStopMode": "stop_on_fill_trailing_profit_lock_tp_within_0.5pct (config.tpModel) from 2026-10-12",
+  "restingStopLimitBelowStopPct": 3.0,
+  "neverBothTpAndStopResting": true,
+  "stopArmCheckImmediatelyAfterFill": true,
+  "manageOffsetMinutes": 2,
+  "enforceHw4LockNotJustBreakeven": true,
+  "restStopLimitOnFill": true,
+  "armTpWhenBidAboveStopPct": 2.0,
+  "roundTakeProfitUpToNextCent": true,
+  "dualManage": {
+   "manageA": {
+    "routineId": "equity-am-sub-2-manage",
+    "cron": "CRON_TZ=America/New_York 4,9,14,19,24,29,34,39,44,49,54,59 9-15 * * 1-5",
+    "note": "primary manage; hours 9-15 discretionary"
+   },
+   "manageB": {
+    "routineId": "equity-am-sub-2-manage-b",
+    "cron": "CRON_TZ=America/New_York 6,11,16,21,26,31,36,41,46,51,56 9-15 * * 1-5",
+    "offsetMinutes": 2,
+    "note": "SECOND manage offset +2 min; hours 9-15 discretionary"
+   },
+   "note": "Hours 9-15 (discretionary; cronsExtendedConfirmed true)."
+  },
+  "trailNote": "With TP +2%, trail BE is secondary: leave resting TP when hw approaches +2%; if holding past +2% without TP fill, exit aggressively at/near +2%.",
+  "exitAggressivelyIfHwPastTpWithoutFill": true,
+  "exitsOnlyFromEt": "15:45",
+  "hardFlattenReasonCodes": [
+   "hard_flatten_1550",
+   "late_hard_flatten",
+   "late_hard_flatten_1555"
+  ],
+  "leanTick": {
+   "targetWallMinutes": 4,
+   "maxToolCallsTarget": 5,
+   "steps": [
+    "preview_scan with scan.workingFilters",
+    "batched 5m historicals for quote-passers near avg5m floor",
+    "compute TA via ${HELPERS_DIR}/ta.py",
+    "fresh get_equity_quotes for final candidates only",
+    "SEC/catalyst only for full passers"
+   ],
+   "reuseAvg5mIfPriorTickBelowPctOfFloor": 10.0,
+   "dailyVolumeCachePath": "data/equity-paper/daily_vol_cache_{sessionDate}.json",
+   "persistEveryDailyFetch": true,
+   "selfSyncBrokerEveryTick": true,
+   "doNotRelyOnEveryCronSlot": true,
+   "note": "Thu paper: 5-min cron fired ~1x per 45\u201390 min (lags 156\u2013222s). Resting stop-limits protect; every tick must self-sync from broker."
+  },
+  "jumpScanPrimaryAfterEt": "10:30",
+  "jumpScanPrimaryNote": "After 10:30 ET morning shortlist is stale (Thu: none of KAPA/BATL/VNTG/BQ/GIFT still in 8\u201360% gainers by midday). Prefer live gainers jump-scan; shortlist advisory only.",
+  "restingStopModeLegacy": "stop_on_fill_swap_to_tp",
+  "supersededFrom2026-10-12": {
+   "trailAfterPlus2Pct": "superseded by config.tpModel (trailing stop from +2%, TP only within 0.5% of targetTP)",
+   "trailAfterPlusPct": "superseded by config.tpModel (trailing stop from +2%, TP only within 0.5% of targetTP)",
+   "restTakeProfitLimitOnFill": "superseded by config.tpModel (trailing stop from +2%, TP only within 0.5% of targetTP)",
+   "armRestingStopWhenBidWithinStopPct": "superseded by config.tpModel (trailing stop from +2%, TP only within 0.5% of targetTP)"
+  },
+  "allDayNote": "From 2026-11-10 (Kevin 08:13 ET): buys/recycles 09:35-15:45, exits only 15:45-15:50, flatten 15:50, flat-verify to 16:00. Every manage tick with a free slot runs a fresh live discovery scan (jump-scan primary after 10:30) + ta.py, and may buy any passer. RT cap 20."
+ },
+ "maxRoundTrips": 9,
+ "requireConfirm": true,
+ "quietManage": true,
+ "reportAtEt": "16:05",
+ "dailyRevise": true,
+ "scaleWithBank": true,
+ "notionalPerNameMode": "half_bank",
+ "goal": {
+  "primary": "grow bank",
+  "metric": "wholeShareRange = available cash",
+  "setBy": "Kevin 2026-10-09 10:47 ET",
+  "note": "Grow the bank to widen the whole-share buy range (whole shares allowed when one share \u2264 available cash). report.md shows daily bank, whole-share range and week-over-week change (vs week-desk.priorWeekEndCash); flatten Phase C ranks proposals by expectedBankGrowthUsd within LOCKS."
+ },
+ "sizingRule": {
+  "effectiveFrom": "2026-10-12",
+  "lock": true,
+  "setBy": "Kevin 2026-10-09 10:46 ET (confirmed)",
+  "text": "If a share's price is \u2264 available cash (the bank), buy WHOLE shares only, even when the stock is fractional-eligible. If the price is > available cash, the name qualifies ONLY if Robinhood marks it fractional-eligible, and then it's a fractional/dollar-amount buy; otherwise skip it.",
+  "availableCash": "broker cash / buying power read in the same run (= bankUsd when flat)",
+  "wholeShareQty": "allocation = availableCash / freeSlots (freeSlots = maxPositions - open positions - open buy orders, min 1); qty = floor(allocation / ask); if 0 and ask <= availableCash -> 1; then cut qty until qty x buyLimit <= availableCash x 0.99. Never fractional in that lane.",
+  "openQuestionForKevin": null,
+  "resolvedNote": "openQuestion cleared 2026-10-09 15:29 ET: L1 + live entries/manage already buy 1 whole share when ask <= availableCash",
+  "superseded": {
+   "by": "Kevin 2026-11-17 20:06 ET ('Evaluate using /deep-research and revise'; bank stop 20% + 10% tripwire confirmed)",
+   "now": "discretion.riskSizing: 1% of equity at risk to the -5% stop, max 2%, capped at 95% of buying power"
+  }
+ },
+ "fractionalLane": {
+  "enabled": true,
+  "startDate": "2026-10-12",
+  "symbols": "ANY symbol Robinhood marks fractional-eligible at entry time",
+  "approvedBy": [
+   "Kevin 2026-10-09 10:44 ET (TSLA/NVDA)",
+   "Kevin 2026-10-09 10:45 ET (all eligible)",
+   "Kevin 2026-10-09 10:46 ET (sizing rule)"
+  ],
+  "eligibilityCheck": {
+   "tool": "get_equity_tradability",
+   "require": {
+    "tradeable": true,
+    "state": "active",
+    "account_type_tradability": "tradable",
+    "fractional_tradability": "tradable"
+   },
+   "rejectValues": [
+    "position_closing_only",
+    "untradable",
+    "missing"
+   ],
+   "when": "same run as the buy; never cached"
+  },
+  "appliesWhen": "ask > availableCash (sizing lock)",
+  "orderType": "market",
+  "sizing": "dollar_amount",
+  "marketHours": "regular_hours",
+  "timeInForce": "gfd",
+  "dollarAmount": "min(notionalPerNameUsd, availableCash \u00d7 0.95, availableCash \u00d7 0.50 unless protection.brokerStopProven) rounded down to cent",
+  "minOrderUsd": 1.5,
+  "maxPositionsShared": 2,
+  "roundTripCapShared": 9,
+  "window": {
+   "noNewBuysAtOrAfterEt": "10:50",
+   "flatByEt": "11:00"
   },
   "stopLossPct": -3.45,
   "takeProfitPct": 2.0,
-  "maxPositions": 2,
-  "shortlistSize": 10,
-  "shortlistSource": "whole_market_composite",
-  "shortlistRankBy": "composite",
-  "entryFilters": {
-    "minRelativeVolume": 1.75,
-    "maxPctChangeAtEntry": 25.0,
+  "taRequired": {
+   "09:30-10:30": 3,
+   "10:30-10:50": 4
+  },
+  "gatesUnchanged": [
+   "dayPct 8\u201360 (recycle 8\u201340)",
+   "last \u2265 0.10",
+   "spread",
+   "RVOL \u2265 1.5",
+   "liquidity: whole-share lane 150k shares/5m; fractional lane $1.5M/5m dollar-volume (fractionalLane.liquidity)",
+   "bidToStop 1.0%",
+   "TA",
+   "chase veto",
+   "coverage",
+   "catalyst",
+   "dilution skip"
+  ],
+  "waivedGates": [
+   "ta.py hard wholeShare (only failing hard check, eligible fractional candidate)"
+  ],
+  "stopOnFill": {
+   "supported": "NO: Robinhood rejects stop and stop-limit orders on fractional quantities (Invalid trigger for fractional order, 2026-10-22). Do not retry (fractionalWatch.retryBrokerStop=false).",
+   "reason": "Robinhood MCP place/review_equity_order: fractional quantities only on type=market + regular_hours; dollar_amount only with market; tax-lot note excludes 'fractional limit orders'. Robinhood take-profit/stop-loss order: whole-share quantities only.",
+   "fallback": "FRACTIONAL 1-MINUTE STOP WATCH (config fractionalWatch, Kevin 2026-10-22): virtual stop/trail/TP checked about every 60 s inside the manage tick (and the buying run), market sell of the full quantity; stale guard + 120 s post-fill watch kept.",
+   "weakerProtection": true,
+   "weakerProtectionNote": "No resting order at the broker: between routine runs a fractional position has NO stop. Manage crons lagged 156\u2013222 s and fired ~1 per 45\u201390 min on paper, so a gap or fast drop can blow far past \u22122%. Exits are market orders handled Not Held (no price cap). Logged in state.weakerProtectionLog."
+  },
+  "postFillWatchSeconds": 120,
+  "staleWatchMinutes": 6,
+  "scanLeg": {
+   "enabled": true,
+   "lastFilter": [
+    "<availableCash + 0.01>",
+    "1000"
+   ],
+   "maxRows": 10,
+   "jumpScanMaxRows": 5,
+   "note": "same %change/instrument filters; names above the bank, fractional-eligible only; all gates unchanged",
+   "volumeFilter": {
+    "live": {
+     "filter_type": "FILTER_TYPE_VOLUME",
+     "predicate": "PREDICATE_GREATER_THAN",
+     "values": [
+      "1000000"
+     ],
+     "interval": "1d"
+    },
+    "premarket": {
+     "filter_type": "FILTER_TYPE_VOLUME",
+     "predicate": "PREDICATE_GREATER_THAN",
+     "values": [
+      "300000"
+     ],
+     "interval": "1d"
+    }
+   }
+  },
+  "expandedUniverseProposal": {
+   "status": "liquidity floor part APPLIED 2026-10-09 11:44 ET (Kevin standing authority): $1.5M/5m dollar floor for the fractional lane only; rest unchanged",
+   "enabled": false,
+   "idea": "liquid gappers above the bank with gates suited to larger names",
+   "scanFilters": [
+    {
+     "filter_type": "FILTER_TYPE_INSTRUMENT_TYPE",
+     "predicate": "PREDICATE_EQUAL",
+     "values": [
+      "STOCK"
+     ]
+    },
+    {
+     "filter_type": "FILTER_TYPE_PERCENT_CHANGE_FROM_CLOSE",
+     "predicate": "PREDICATE_BETWEEN",
+     "values": [
+      "0.04",
+      "0.40"
+     ],
+     "interval": "1d"
+    },
+    {
+     "filter_type": "FILTER_TYPE_LAST",
+     "predicate": "PREDICATE_BETWEEN",
+     "values": [
+      "2.00",
+      "1000"
+     ]
+    },
+    {
+     "filter_type": "FILTER_TYPE_VOLUME",
+     "predicate": "PREDICATE_GREATER_THAN",
+     "values": [
+      "2000000"
+     ],
+     "interval": "1d"
+    }
+   ],
+   "proposedGateChanges": {
+    "minPctChangeAtEntry": 4.0,
+    "liquidityFloor": "avg 5m dollar volume \u2265 $1,000,000 instead of 150k shares",
+    "spreadMaxPct": 0.3
+   },
+   "keep": [
+    "TA \u22653/5 (\u22654/5 from 10:30)",
+    "catalyst check",
+    "dilution skip",
+    "SL \u22122 / TP +2",
+    "window",
+    "max 2",
+    "RT 6"
+   ],
+   "evidence": "preview_scan Fri 2026-10-09 10:46 ET: 27 rows (HUM, MRNA, COIN, ORCL, CCI, FSLY, NVAX, NIO, \u2026); 7 of 27 were \u2265 8% (the current day% gate); 8 of a 10-name sample were fractional-tradable (VIVK, SAIQ position_closing_only)",
+   "blocker": "ta.py applies one global entryFilters set (day% 8\u201360, 150k shares/5m); lane-specific thresholds need a ta.py change that has NOT been built"
+  },
+  "evidence": {
+   "at": "2026-10-09T10:46-04:00",
+   "tradability": "TSLA, NVDA fractional tradable (extended-hours fractional true). Scan names: 09:10 shortlist+alternates 4/10 tradable (NAMM, CNCK, SMJF, QSI); 06:30 list 5/10 (HOVR, KDK, SLNH, SUIG, BATL); 'unaffordable' names 1/10 (AEC); rest position_closing_only",
+   "previewTest": "review_equity_order returned order_checks {} for a 0.01-share TSLA stop_market sell (no position held) and a 0.01-share TSLA limit buy: preview does not validate fractional order-type rules"
+  },
+  "priceCapLifted": "names above available cash allowed if fractional-eligible (liquid-gapper leg); all gates kept",
+  "liquidity": {
+   "enabled": true,
+   "lane": "fractional only (ask > availableCash)",
+   "minAvgDollarPer5MinBar": 1500000,
+   "basis": "mean of volume \u00d7 close over the last 3 complete RTH 5m bars (ta.py key liqDollar; pass --cash <availableCash>)",
+   "wholeShareLaneUnchanged": "minAvgSharesPer5MinBar 150000",
+   "justification": "Fri Oct 9 data: whole-share passers at 150k shares \u00d7 $1\u20135 = ~$0.15\u20130.57M per 5m; $1.5M is ~3\u00d7 the top of that, i.e. stricter in dollars. Fractional shortlist 09:45\u201310:40: FSLY $2.5\u20136.7M, NVAX $1.9\u20134.2M, CCI $3.0\u201315.5M pass; CCC $1.3\u20131.7M borderline (fails after 09:45). Desk orders are \u2264 $1.89, so the floor is about tape quality, not our size.",
+   "approvedBy": "Kevin standing authority 2026-10-09 11:44 ET",
+   "effective": "2026-10-12"
+  },
+  "protection": {
+   "policy": "deskWatch1m",
+   "attempts": [
+    "type=stop, stop_price=stop, full fractional qty, gfd, regular_hours",
+    "if rejected: type=stop_limit, limit = stop \u00d7 0.97 (once)"
+   ],
+   "onBothRejected": "(superseded 2026-10-22) desk_monitored with the FRACTIONAL 1-MINUTE STOP WATCH (config fractionalWatch)",
+   "takeProfit": "virtual (market sell after cancelling the broker stop) on every fractional path",
+   "log": "state.fractionalProtectionLog[] {at, routine, symbol, qty, attempts[], protectionPath}; desk_monitored also state.weakerProtectionLog[]",
+   "brokerStopProven": false,
+   "brokerStopProvenAt": null,
+   "riskControl": {
+    "deskMonitoredMaxPctOfAvailableCash": 50,
+    "maxDeskMonitoredPositions": 1,
+    "reason": "crons ran 20\u201330 min late on Oct 8\u20139, so a desk-monitored stop can be unwatched for that long",
+    "rule": "size fractional buys \u2264 50% of available cash until brokerStopProven; if a position ends up desk_monitored above 50%, market-sell the excess (frac_risk_trim); no new fractional buy while a desk_monitored (or path-unknown) fractional position is open"
+   },
+   "evidence": "MCP place_equity_order description: fractional quantities only with type=market + regular_hours. Oct 9 review_equity_order preview did not reject a fractional stop (preview is not proof).",
+   "approvedBy": "Kevin standing authority 2026-10-09 11:44 ET",
+   "policyPrior": "brokerStopFirst",
+   "policyNote": "From 2026-10-22 (Kevin): no broker stop/stop-limit attempts on fractional quantities (Robinhood rejects them); protection = config fractionalWatch (1-minute in-tick desk watch). brokerStopProven stays false, so the 50% cap stays."
+  },
+  "watchGapGate": {
+   "enabled": true,
+   "lookbackMinutes": 15,
+   "maxFireGapMinutes": 6,
+   "setBy": "Kevin 2026-10-28 11:14 ET (chat: 'whatever you need to do' toward 5% win)",
+   "reason": "2026-10-28 SKHY stale exit + VRT blind ~11 min",
+   "skipReason": "fractional_watch_gap"
+  }
+ },
+ "tpModel": {
+  "effectiveFrom": "2026-10-12",
+  "setBy": "Kevin 2026-10-09 10:51 ET (confirmed)",
+  "lock": "HARD STOP from 2026-11-11 (Kevin 16:28): resting stop_limit trigger \u22124.5% / limit \u22125% (entry\u00d70.955 / \u00d70.95); \u22122% = chart-based recovery DECISION point (recovery.py, sell if score < recoveryModel.thresholdPct). TP dynamic per trade (floor tpModel.floorPct; trailing lock from +2% unchanged)",
+  "helper": "${HELPERS_DIR}/tp_model.py",
+  "stopPct": -4.5,
+  "floorPct": 5.0,
+  "cap": null,
+  "params": {
+   "atrPeriod": 14,
+   "atrInterval": "5minute",
+   "atrMultBase": 1.0,
+   "atrMultPerScore": 2.0,
+   "strongCatalystMin": 0.7,
+   "fibExtensions": [
+    1.272,
+    1.618
+   ],
+   "minOpeningLegPct": 4.0,
+   "trailActivatePct": 2.0,
+   "trailBreakevenPlusPct": 0.5,
+   "trailAtrMult": 1.0,
+   "trailReplaceMinStepPct": 0.25,
+   "tpSwitchWithinPct": 0.5,
+   "tpSwitchBackBelowPct": 1.0
+  },
+  "formulas": {
+   "stop": "fill \u00d7 0.955 (trigger), limit fill \u00d7 0.95",
+   "floor": "fill \u00d7 1.02",
+   "k": "atrMultBase + atrMultPerScore \u00d7 catalystScore (1.0\u20133.0)",
+   "T_atr": "fill + k \u00d7 ATR14(5m)",
+   "walls": "premarketHigh, priorDayHigh, hodSoFar, next 2 round numbers (step 0.05 <$1, 0.25 <$5, 0.50 <$10, 1 <$50, 5 \u2265$50), fib 1.272/1.618 of opening leg (\u22654%)",
+   "targetNormal": "catalystScore < 0.7: max(floor, min(T_atr, firstWall \u2212 1 tick))",
+   "targetStrong": "catalystScore \u2265 0.7: max(floor, T_atr, firstWallAtOrAfter(T_atr) \u2212 1 tick)",
+   "rounding": "UP to next cent (\u2265$1) / 0.0001 (<$1)",
+   "trailStop": "once bid \u2265 fill \u00d7 1.02: max(fill \u00d7 1.005, hw \u2212 1.0 \u00d7 ATR), never lowered; replace when +0.25% of fill and \u22651 tick",
+   "tpSwitch": "rest TP limit only when bid \u2265 targetTP \u00d7 0.995; back to trailing stop-limit when bid < targetTP \u00d7 0.99 or bid \u2264 activeStop \u00d7 1.01",
+   "neverBoth": true
+  },
+  "recordInState": [
+   "positions[].targetTP",
+   "positions[].tpReasoning",
+   "positions[].catalystScore",
+   "positions[].atr14_5m",
+   "positions[].trailStop",
+   "tpDecisions[]"
+  ],
+  "fallback": "tp_model failure \u2192 targetTP = floor, tpReasoning 'fallback_floor', errorsAutoFixed",
+  "fractional": "virtual targetTP + virtual trail with market sells (no resting orders possible)",
+  "research": "${DESK_ROOT}/2026-10-09-catalyst-tp-research.md",
+  "caveat": "parameters are priors from free sources + desk judgment, not fitted; judge on expectancy R",
+  "allDayNote": "unchanged: stop-on-fill -2%, trailing profit lock, TP within 0.5% of targetTP"
+ },
+ "catalystScore": {
+  "effectiveFrom": "2026-10-12",
+  "research": "${DESK_ROOT}/2026-10-09-catalyst-tp-research.md",
+  "weights": {
+   "fda_accelerated_or_unexpected_approval": 0.9,
+   "positive_topline_data": 0.7,
+   "earnings_beat_small_cap": 0.65,
+   "contract_quantified": 0.6,
+   "earnings_beat_large_cap": 0.5,
+   "uplisting_index_add": 0.45,
+   "fda_known_pdufa_approval": 0.4,
+   "short_squeeze_no_news": 0.3,
+   "contract_vague": 0.2,
+   "sympathy_or_no_news": 0.1,
+   "hype_pr": 0.1,
+   "offering": -1.0,
+   "reverse_split_30d": -0.5
+  },
+  "modifiers": {
+   "gapPctGt50": -0.2,
+   "confirmedBy8K6K": 0.1,
+   "rthBreakOfPremarketHighRisingVolume": 0.1,
+   "catalystOlderThanPriorClose": -0.1
+  },
+  "clamp": [
+   0,
+   1
+  ],
+  "skipIfBaseBelow": 0,
+  "usedFor": [
+   "entries/recycle ranking (replaces 'fresh positive catalyst first')",
+   "TP width k = 1.0 + 2.0 \u00d7 score",
+   "strong (\u22650.7) may target past the first wall"
+  ],
+  "sourcesNote": "free/unpaid sources only; ads, paid promos and prediction-market partnerships ignored; vendor free pages down-weighted"
+ },
+ "successGoal": {
+  "setBy": "Kevin 2026-10-09 10:51 ET",
+  "effectiveFrom": "2026-10-12",
+  "baseline": {
+   "period": "week 2: Mon 2026-10-05 \u2013 Fri 2026-10-09",
+   "roundTrips": 16,
+   "wins": 6,
+   "losses": 10,
+   "winRatePct": 37.5,
+   "avgWinR": 2.042,
+   "avgLossR": -2.132,
+   "expectancyR": -0.567,
+   "avgPnlPct": -1.134,
+   "rDefinition": "R = pnlPct / 2.0 (risk = locked 2% stop)",
+   "computedAt": "2026-10-09T11:42:58-04:00",
+   "source": "morning-session-2026-10-0[5-8](-final).json + today's morning-session.json roundTrips",
+   "caveat": "week-2 trades ran under older exit rules (SL \u22122.5/TP +7.5 early in the week, then \u22122/+2); small sample",
+   "note": "Historical week-2 baseline (16 RT, 37.5% win, expectancy \u22120.567R). Current prime directive is decision success: baseline 25.8%, goal 30.8% (see decisionObjective)."
+  },
+  "target": {
+   "winRatePct": 42.5,
+   "expectancyR": -0.517
+  },
+  "rule": "met when win rate \u2265 baseline + 5 pp OR expectancy \u2265 baseline + 0.05R (5 percentage points of R)",
+  "trackedIn": [
+   "report.md GOAL line",
+   "flatten scorecard 'Success goal vs week-2 baseline'"
+  ]
+ },
+ "weeklyAutoRoll": {
+  "enabled": true,
+  "cancelled": false,
+  "confirmedBy": "Kevin 2026-10-09 10:48 ET",
+  "until": "Kevin cancels",
+  "rollAt": "Friday flatten Phase C step 6 (after week report)",
+  "safetyNet": "scan.md step 1 rolls if Friday's roll was missed",
+  "note": "no 'confirm next week' gate; each Friday rolls week-desk + config to the next Mon\u2013Fri with confirmedForWeek true"
+ },
+ "report": {
+  "idempotencyFlag": "morning-session.json reportDeliveredFor (date); report exits quietly if = today",
+  "leanSpec": "\u22643 broker reads normal path, \u22644 fallback; no pagination; no trade history; no scorecard writes",
+  "rewrittenAt": "2026-10-09T11:46:52-04:00",
+  "format": "simple",
+  "simpleTemplate": "LIVE \u2014 <Day Mon D>: W/L a/b | $<startCash> \u2192 $<endCash> (<\u00b1$x.xx>)\nDecisions: <r>% correct today (<c>/<n>) | baseline 25.8% \u2192 goal 30.8%  [+ one ALERT line only if an escalation needs Kevin]",
+  "simpleFormatBy": "Kevin 2026-11-10 16:09 ET: \"Simple report daily. Win loss total. Final dollar vs starting dollar.\" (live cash only; deposits excluded)"
+ },
+ "stallExit": {
+  "enabled": true,
+  "effectiveFrom": "2026-10-15",
+  "afterMinutes": 14,
+  "maxHwPct": 1.0,
+  "appliesWhenRestingMode": [
+   "stop"
+  ],
+  "action": "cancel stop-limit \u2192 verify \u2192 sell limit at bid (retry bid\u00d70.97); fractional desk_monitored \u2192 market sell",
+  "exitReason": "stall_exit",
+  "approvedBy": "Kevin standing authority 2026-10-14",
+  "evidence": [
+   "Mon 2026-10-12 CYPH",
+   "Tue 2026-10-13 FRMI #3: 50 min, max +0.26%, \u22122.04%",
+   "Wed 2026-10-14 MXCT: 19 min, never above entry"
+  ],
+  "revertIf": "over 5 sessions from 2026-10-15, \u22652 stall-exited names would have hit TP before the stop \u2192 enabled=false"
+ },
+ "stopRounding": {
+  "rule": "fill \u00d7 0.98 rounded UP to the cent (toward the fill)",
+  "effectiveFrom": "2026-10-15",
+  "example": "FFAI 1.2283\u00d70.98=1.2037 \u2192 stop 1.21 not 1.20",
+  "rationale": "realized risk never exceeds \u22122%"
+ },
+ "standingAuthority": {
+  "procedureLevelProposals": "wake parent (parent decides); never 'Needs your OK' to Kevin",
+  "appliedConfigTweaksLabel": "decided by desk",
+  "updatedAt": "2026-10-14T11:28:01-04:00",
+  "independentOperation": {
+   "by": "Kevin 2026-11-10 16:11 ET: \"Move independently if I don't respond to message. Only stop system on command.\"",
+   "rule": "The desk never waits on Kevin for any decision: when a question would go to him it decides within the rules, proceeds and logs the decision (decided by desk). The system stops (desk.paused / liveMode.armed false) ONLY on Kevin's explicit command. The kill switch only blocks new buys for that day and resets next day (trading rule, not a system stop).",
+   "systemStopsOnlyOn": [
+    "Kevin's explicit command (desk.paused / liveMode.armed false)",
+    "bankStop: live total equity \u2264 50% of baseline (Kevin 2026-11-10 16:24 ET)"
+   ]
+  },
+  "autoLiveAtOpen": "Kevin 2026-11-10 16:09 ET (chat): \"Arm live at 9:30 am without live confirmation.\" (standing, every trading day)"
+ },
+ "newEntryCutoffEt": "15:45",
+ "newEntryCutoff": {
+  "et": "15:45",
+  "effectiveFrom": "2026-10-19",
+  "appliesTo": [
+   "entries",
+   "entries-backup",
+   "manage recycle",
+   "jump_scan_adds"
+  ],
+  "rule": "no buys at or after 15:45 ET (all-day session from 2026-11-10; was 10:00)",
+  "unchanged": [
+   "exits",
+   "stallExit",
+   "15:45-15:50 exits only",
+   "15:50 flatten",
+   "15:55 hard-flatten safety net"
+  ],
+  "locksOuterBound": "10:50",
+  "trackField": "cutoff1000Blocked",
+  "revertIf": "over 5 sessions from 2026-10-19, if candidates blocked by the 10:00 cutoff (10:00-10:50) would have netted positive (each scored +2% before -2% = win, else loss) -> revert newEntryCutoffEt to 10:50",
+  "revertTo": "10:50",
+  "revertWindow": {
+   "started": "2026-10-19",
+   "sessions": 5,
+   "log": [
+    {
+     "date": "2026-10-20",
+     "blockedRows": 47,
+     "symbols": [
+      "CYPH",
+      "HSAI",
+      "HTZ",
+      "HUIZ",
+      "MYGN",
+      "ORBS",
+      "QTEX",
+      "RCUS",
+      "VNET"
+     ],
+     "netWouldHave": "pending (session runs to 15:30 under todayOverride; score at done)",
+     "note": "09:30-10:00 lost to failed routines; all blocks were TA/hard-gate fails, not the cutoff alone"
+    },
+    {
+     "date": "2026-10-21",
+     "blockedRows": 0,
+     "netWouldHave": "n/a",
+     "note": "cutoff suspended by todayOverride stop-only test after 10:05; cutoff becomes owner-locked strict from 2026-10-22 (P7), so this revert check is moot"
+    }
+   ]
+  },
+  "approvedBy": "Kevin in chat 2026-10-16 13:58 ET"
+ },
+ "cashFlowRule": {
+  "text": "Deposits/withdrawals are never P&L. Daily trading P&L = broker get_realized_pnl (equity, day); cash check = endCash - startCash - depositsToday. Week trading P&L = currentCash - weekStartBank - deposits after week start. WoW % = week trading P&L / weekStartBank.",
+  "detect": "scan step 4: if get_portfolio/get_accounts shows pending_deposits or cash - prior endCash differs by more than |realized pnl| + $0.05 with no open positions, record week-desk.deposits[] {at, amountUsd, type} and set day.depositsUsd",
+  "addedAt": "2026-10-17T15:20:00-04:00"
+ },
+ "discretion": {
+  "enabled": true,
+  "effectiveFrom": "2026-10-19",
+  "approvedBy": "Kevin in chat 2026-10-17 16:44 ET (discretionary session) + 16:46 ET (daily target)",
+  "quote": "Go right to the floor when the market opens and execute. Give me the recap when you stop. Use your own discretion to decide when to pull the plug on trading for the day. If you go long after the deadline that's fine if you can justify it. You're in control.",
+  "entriesFromEt": "09:35",
+  "defaultNewBuyCutoffEt": "15:45",
+  "lateBuy": {
+   "untilEt": "11:30",
+   "blackout": [
+    "10:55",
+    "11:01"
+   ],
+   "minTaPass": 3,
+   "minCatalystScore": 0.4,
+   "requireAboveSessionVwap": true,
+   "requireNotHalted": true,
+   "requireJustification": true,
+   "fractionalLaneUntilEt": "10:50",
+   "taPyArgs": "--no-new-after 11:30",
+   "enabled": false,
+   "disabledFrom": "2026-10-22",
+   "disabledBy": "Kevin 2026-10-21 10:58 ET: apply backtest proposals 1,2,6,7 LIVE from Thu 2026-10-22; paper-test 3-5 (report /workspace/silas-quant/backtests/2026-10-21-price-band-budget/report.md) (proposal 7: strict 10:00 cutoff, no D2 late buys on normal days)"
+  },
+  "holdPast1100": {
+   "checkAtEt": "10:57-10:59",
+   "minPctAboveFill": 1.0,
+   "requireAboveSessionVwap": true,
+   "requireBrokerStopAtLeastBreakevenOrTrail": true,
+   "breakevenRounding": "fill rounded UP to the cent",
+   "maxUntilEt": "15:45",
+   "desk_monitored_fractional": "never held",
+   "status": "moot from 2026-11-10 (all-day session; no 11:00 flatten)"
+  },
+  "lateHardFlattenEt": "15:50",
+  "lateHardFlattenReason": "hard_flatten_1550",
+  "killSwitch": {
+   "dayPnlPctOfStartBank": -3.0,
+   "consecutiveStopOuts": 2,
+   "lossStopReasons": [
+    "resting_stop_limit",
+    "stop_aggressive",
+    "virtual_stop_market",
+    "virtual_stale_exit",
+    "trail_stop (pnl<0)",
+    "trail_stop_aggressive (pnl<0)"
+   ],
+   "sticky": true,
+   "action": "no new buys; manage exits only"
+  },
+  "dailyTarget": {
+   "pctOfStartBank": 5.0,
+   "lockFloorPct": 3.0,
+   "note": "goal only; never loosens a guardrail or forces an entry",
+   "protectMode": {
+    "raiseStopsToLockFloor": true,
+    "newBuys": "A+ only: TA>=4/5 AND catalystScore>=0.4 AND above session VWAP; size so a full stop leaves day >= floor",
+    "floorBreach": "halt (protect_floor_3pct) + hard flatten everything (protect_floor_flatten)"
+   }
+  },
+  "done": {
+   "when": [
+    "flat AND halted (kill switch)",
+    "flat at/after the 15:50 flatten"
+   ],
+   "fields": [
+    "discretion.doneAt",
+    "discretion.doneReason",
+    "doneAt",
+    "doneReason"
+   ]
+  },
+  "report": "sends once (reportDeliveredFor) only after doneAt; fallback alert send at >=15:50 if not done",
+  "cronsExtendedConfirmed": true,
+  "cronsExtendedNote": "false until Kevin extends manage crons to 9-15 and adds the 15:45/15:50 flatten-backup fires. While false: no holds past 11:00 and no late buys after 10:55 (everything flat at 11:00).",
+  "procedureBlock": "${DESK_ROOT}/live/_build.py DISC (D0-D6)",
+  "backup": "${DESK_ROOT}/live/backups/pre-discretion-2026-10-17/",
+  "cronsExtendedConfirmedNote": "Routines extended 2026-10-17 ~17:45 ET by Engineering Bot: manage a/b 9-15, flatten-backup 10:57+15:45/15:50, report 11:15-14:45 half-hourly + 15:52 (sends once when done), scan 05:30.",
+  "cronsExtendedConfirmed_note_2026-10-20": "Kevin 10:08 ET: run until 4 today; manage crons run to 15:59 per README",
+  "todayOverride_2026-10-20_archived": {
+   "date": "2026-10-20",
+   "lastNewBuy": "15:30",
+   "skip1100Flatten": true,
+   "skipBlackout1055_1101": true,
+   "hardFlatten": "15:45",
+   "holdCheckD3": "not needed (no 11:00 flatten today)",
+   "taPyArgs": "--no-new-after 15:30",
+   "requiresD2Gates": true,
+   "killSwitchAndTargetUnchanged": true,
+   "approvedBy": "Kevin in chat 2026-10-20 10:08 ET: 'Run until 4 to make up for lost time.' (relayed by parent)",
+   "note": "Dated override: applies ONLY when today (ET) == date; any other date ignores it and the normal discretion rules apply. 11:00 flatten and 10:57/11:08 flatten-backups place NO sells today (they still do broker sync/protection checks, scorecard/dailyReport partial and revise). Late buys 10:00-15:30 via D2 gates. HARD FLATTEN ALL at 15:45 (15:45/15:50 backups stay). D6 done = flat AND (halted OR now>=15:30) or flat after 15:45."
+  },
+  "cronsExtendedConfirmed_note_2026-10-21": "Kevin 10:05 ET: re-run today until 4; manage crons already run to 15:59",
+  "strictCutoff": {
+   "from": "2026-10-22",
+   "newBuyCutoffEt": "15:45",
+   "doneWhenFlatFromEt": "15:50",
+   "note": "no new buys at/after 10:00 ET on normal days; D3 holds past 11:00 still allowed via the 10:57 hold check; default 11:00 flatten unchanged; D6 done = flat AND (halted OR now >= 11:00) or flat after 15:45. A dated todayOverride still governs on its date."
+  },
+  "allDaySession": {
+   "enabled": true,
+   "from": "2026-11-10",
+   "by": "Kevin 2026-11-10 08:13 ET: \"Maximize your trading speed and run it all day till 4:00\" + \"In-N-Out Bob and weave baby\" (fast in-and-out scalps all session)",
+   "newBuysEt": [
+    "09:35",
+    "15:45"
+   ],
+   "exitsOnlyEt": [
+    "15:45",
+    "15:50"
+   ],
+   "flattenEt": "15:50",
+   "hardFlattenSafetyNetEt": "15:55",
+   "flatVerifyUntilEt": "16:00",
+   "reportEt": "16:00-16:15 (after the desk is done)",
+   "noBlackout1055_1101": true,
+   "no1100Flatten": true,
+   "d2LateBuys": "not needed (the normal window runs to 15:45); discretion.lateBuy stays disabled",
+   "d3HoldCheck": "moot (no 11:00 flatten); everything is flat by 15:50",
+   "fractional": "desk-monitored fractional positions exit at 15:45 (no broker stop; reconcile.py fracwatch stops at 15:45)",
+   "manageEveryFire": "desk_clock runs manage on every 5-min fire 09:30-15:45 even when flat; a free slot gets a fresh live discovery scan + TA on that tick",
+   "killSwitch": "2 consecutive loss stops OR -3% day halts new buys for the rest of the day (sticky); positions keep normal exits",
+   "rtCap": 4
+  },
+  "riskSizing": {
+   "riskPct": 1.0,
+   "maxRiskPct": 2.0,
+   "cashCapFrac": 0.95,
+   "setBy": "Kevin 2026-11-17 20:06 ET ('Evaluate using /deep-research and revise'; bank stop 20% + 10% tripwire confirmed)",
+   "replaces": "full-cash sizing (bankMode full_cash)",
+   "evidence": "reports/Gordongecko strategy evaluation.md item 2"
+  }
+ },
+ "universePolicy": {
+  "since": "2026-10-21",
+  "standing": true,
+  "by": "Kevin 10:06 ET: 'Remove restrictions on what you trade.'",
+  "universe": "ANY US-listed common stock or ETF priced >= $2.00 (fractional allowed for higher-priced names, sized from live buying power); entry day move 8-25% (prefer 8-15%)",
+  "removed": [
+   "sub-$2 / priceMax cap",
+   "8-60% day-move band",
+   "shortlist-only restriction",
+   "'chasing' movers-only filter"
+  ],
+  "sources": "whole market: Robinhood movers/top movers, top volume, sector leaders, large caps with catalysts (scan + jump-scan + manage-tick discovery)",
+  "kept": [
+   "cash equity longs only (no crypto, options, shorts, margin)",
+   "-2% resting broker stops on every fill",
+   "max 2 positions + buying-power sizing (normal days)",
+   "dilution-filing rejection (normal days)",
+   "day loss stop -5% / 2 consecutive stop-outs (normal days)",
+   "15:45 hard flatten"
+  ],
+  "configChanges": {
+   "at": "2026-10-21T10:12:00-04:00",
+   "previous": {
     "minPctChangeAtEntry": 8.0,
-    "skipIfBidAskSpreadPct": 8.0,
-    "preferMidRank": true,
-    "avoidTopPctBlownOff": true,
-    "maxPctChangeAtRecycle": 25.0,
-    "sameSymbolRecycleCoolDayPct": null,
-    "minLastPriceAtEntry": 1.0,
-    "tightSpreadIfLastBelow": 0.25,
-    "tightSpreadMaxPct": 3.0,
-    "skipRecycleIfBidWithinStopPct": 1.0,
-    "allowSameSymbolRecycleIfCriteriaMet": true,
-    "preferSkipJustStoppedSameSession": true,
-    "watchlistExtras": [],
-    "minAvgSharesPer5MinBar": 150000,
-    "minAvgSharesPer5MinBarLookbackBars": 3,
-    "minAvgSharesPer5MinBarAppliesTo": [
-      "entries",
-      "recycles",
-      "jump_scan_adds",
-      "adopted_positions_report_only"
-    ],
-    "bidToStopGapAnchor": "ask_expected_fill",
-    "afterTrailHwGe4LockPct": 1.5,
-    "exitIfBidUnderTpAfterHwGe4ManageTicks": 1,
-    "roundTakeProfitUpToNextCent": true,
-    "preferSkipJustStoppedOnlyIfStillFading": true,
-    "encourageSameSymbolRecycleOnBounce": true,
-    "ta": {
-      "requiredPassCount": 3,
-      "ofChecks": 5,
-      "checks": [
-        "volumeShape",
-        "stochRsi",
-        "vwap",
-        "bollinger",
-        "fibonacci"
-      ],
-      "skipIfIncomplete": true,
-      "taIncompleteAction": "skip_name",
-      "logIn": "entryLiveFilters.ta",
-      "dataSources": {
-        "preferred": [
-          "batched get_equity_historicals 5minute (up to 10 symbols) + ${HELPERS_DIR}/ta.py",
-          "get_equity_technical_indicators (fallback only)"
-        ],
-        "intervalPrefer": "5minute",
-        "intervalFallback": "1minute",
-        "note": "If an indicator is unavailable for a name, mark taIncomplete and skip that name rather than inventing values.",
-        "batchMaxSymbols": 10,
-        "localTaHelper": "${HELPERS_DIR}/ta.py",
-        "minBarCoveragePctForTa": 80.0,
-        "taIncompleteIfCoverageBelow": true
-      },
-      "volumeShape": {
-        "keepRvolMin": 1.5,
-        "keepAvgSharesPer5Min": 150000,
-        "lastComplete5mBarVolGePriorBar": true,
-        "skipIfLastBarVolLtPctOfPrior3BarAvg": 50.0,
-        "note": "Rising or at least not collapsing; skip if last bar vol < 50% of prior 3-bar average."
-      },
-      "stochRsi": {
-        "period": 14,
-        "preferLongWhen": [
-          "k_rising_from_le_30_oversold_bounce",
-          "k_between_30_70_with_higher_lows"
-        ],
-        "skipNewEntryIfKGe": 80.0,
-        "allowOverboughtExceptionIf": "reclaiming_vwap_with_rising_volume",
-        "reHitPreferKTurnedUpFromLe": 40.0,
-        "note": "Longs only. Skip new entry if StochRSI %K >=80 unless reclaiming VWAP with rising volume. On re-hit after pullback prefer %K turned up from <=40."
-      },
-      "vwap": {
-        "session": true,
-        "preferPriceGeVwapForNewEntries": true,
-        "strongestSetup": "reclaim_prior_bar_closed_below_vwap_current_bid_last_back_above_with_rising_volume",
-        "skipIfFadingPctBelowVwapOnFallingVolume": 1.0,
-        "note": "Prefer price >= VWAP (uptrend side). Skip if price fading >1% below VWAP on falling volume."
-      },
-      "bollinger": {
-        "period": 20,
-        "stdDev": 2.0,
-        "intervalPrefer": "5minute",
-        "intervalFallback": "1minute",
-        "prefer": [
-          "near_mid_band",
-          "bounce_off_lower_band_with_stoch_turning_up"
-        ],
-        "skipChaseIfLastAboveUpperAndStochKGe": 80.0,
-        "plus": "squeeze_to_expansion_with_close_above_mid_band",
-        "note": "Prefer entry near mid-band or after bounce off lower with StochRSI turning up. Skip chase if last above upper AND StochRSI >=80."
-      },
-      "fibonacci": {
-        "levelsPct": [
-          23.6,
-          38.2,
-          50.0,
-          61.8
-        ],
-        "preferReHitZonePct": [
-          38.2,
-          61.8
-        ],
-        "impulse": "session_low_to_high_of_move_or_first_30_60m_range",
-        "firstEntryFallbackSwing": "premarket_high_to_open_or_first_15m_high_to_low",
-        "skipFibGateIfNoClearImpulse": true,
-        "noteWhenFibSkipped": "fibPending",
-        "stillRequireWithoutFib": [
-          "vwap",
-          "volumeShape",
-          "stochRsi"
-        ],
-        "preferBidHoldingAboveFibPlus": [
-          "vwap_or_mid_bb"
-        ],
-        "skipReHitIfBreakBelow61_8OnRisingSellVolume": true,
-        "note": "Apple Fibonacci thinking. Prefer re-hit/recycle when price pulls back into 38.2-61.8% then resumes up (bid holding above fib + VWAP or mid-BB). Skip re-hit if breaks below 61.8% on rising sell volume (failed trend).",
-        "passRequiresRetracePctGe": 23.6,
-        "trivialNearHighDoesNotPass": true,
-        "passRequiresRetraceNote": "Fib check only counts as a TA pass if price has retraced \u226523.6% from impulse high; sitting at the high is not a fib pass."
-      },
-      "scoring": {
-        "hardFiltersStillRequired": [
-          "RVOL",
-          "liquidity_150k_5m",
-          "spread",
-          "dayPct",
-          "bidToStop"
-        ],
-        "mustPassAtLeastNOf5TaChecks": 3,
-        "taChecks": [
-          "volumeShape",
-          "stochRsi",
-          "vwap",
-          "bollinger",
-          "fibonacci"
-        ],
-        "logPassedFailedIn": "entryLiveFilters.ta",
-        "mustPassAtLeastNOf5TaChecksFrom1030": 3
-      },
-      "requiredPassCountByTime": [
-        {
-          "fromEt": "09:30",
-          "toEt": "16:00",
-          "requiredPassCount": 3,
-          "tag": "after1000-5of5",
-          "note": "higher-risk 2026-11-13: 3/5 all day (tag kept so desk_learn tunes this entry, step \u00b11 within 3..5)"
-        }
-      ],
-      "lateWindowRule": {
-        "fromEt": "10:30",
-        "toEt": "15:45",
-        "requiredPassCount": 3,
-        "appliesTo": [
-          "entries",
-          "recycles"
-        ],
-        "appliedAt": "2026-10-07T19:50:00-04:00",
-        "revertIf": "revert to \u22653/5 if the 4/5 rule blocks ALL 10:30+ entries for 3 sessions while 3/5-passing candidates would have won (+2% before \u22122%); track lateTaBlockedWouldHaveWon daily",
-        "trackField": "lateTaBlockedWouldHaveWon"
-      },
-      "chaseHardVeto": {
-        "enabled": false,
-        "when": "last_above_upper_bollinger AND stochRsiK >= 80",
-        "action": "hard_skip_regardless_of_3of5_score",
-        "appliedAt": "2026-10-08T17:05:00-04:00",
-        "evidence": "QNME paper 14:57 passed TA 3/5 (volume/VWAP/fib) while StochRSI K=100 and above upper BB \u2014 chase slipped through as a vote",
-        "disabledAt": "2026-10-21T10:13:00-04:00",
-        "disabledBy": "Kevin 10:06 ET 'Remove restrictions on what you trade' (standing)"
-      },
-      "strictFromEt": "09:35",
-      "strictFromEtRevertWindow": {
-        "started": "2026-11-06",
-        "sessions": 5,
-        "sessionsCompleted": 0,
-        "status": "open",
-        "revertTo": "10:00",
-        "baseline3of5ExpectancyR": -0.3,
-        "trackField": "ta4From0935OnlyEntries",
-        "revertIf": "over next 5 sessions, 4/5-only entries (would have been 3/5 under old rule) avg below -0.30R, OR zero entries for 3 sessions \u2192 revert strictFromEt to 10:00",
-        "log": [],
-        "evidenceAtApply": {
-          "week": "2026-11-02..2026-11-05",
-          "entries3of5": "1W/3L (JBLU +0.57; CSIQ -0.40, EOSE -0.72, U -1.02) \u2014 all stops \u22642.5 min, HW=fill",
-          "entries5of5": "AEHR +2.87",
-          "expectedBankGrowthUsdPerWeek": 1.57
-        }
-      },
-      "minRequiredPassCountFloor": 3,
-      "strictMinPassCount": 3
-    },
-    "catalysts": {
-      "enabled": true,
-      "observeOn": [
-        "scan",
-        "entries",
-        "recycles",
-        "jump_scan_adds"
-      ],
-      "dataSources": [
-        "get_sec_filing_index",
-        "get_earnings_calendar",
-        "get_equity_fundamentals",
-        "search"
-      ],
-      "filingTypesToCheck": [
-        "8-K",
-        "6-K",
-        "424B*",
-        "S-1",
-        "S-3",
-        "S-1/A",
-        "S-3/A",
-        "424B3",
-        "424B4",
-        "424B5"
-      ],
-      "logUnder": [
-        "eventFlags",
-        "catalysts"
-      ],
-      "logFields": {
-        "catalystType": "string",
-        "summary": "one_line"
-      },
-      "preferFreshPositive": {
-        "enabled": true,
-        "types": [
-          "contract",
-          "FDA",
-          "earnings_beat",
-          "listing_news",
-          "partnership",
-          "positive_8K",
-          "clinical_progress"
-        ],
-        "note": "Prefer entries WITH a fresh positive catalyst when TA also passes (\u22653/5)."
-      },
-      "downRankOrSkip": {
-        "types": [
-          "dilution",
-          "offering",
-          "ATM",
-          "424B*",
-          "S-1",
-          "S-3",
-          "going_concern",
-          "noncompliance_listing"
-        ],
-        "action": "down_rank_or_skip_even_if_ta_hot",
-        "note": "Down-rank or skip dilution/offering/going-concern catalysts even if TA looks hot."
-      },
-      "reHit": {
-        "recheckCatalystIntact": true,
-        "skipIfCatalystFaded": true,
-        "note": "On re-hit: re-check whether the catalyst is still intact or already faded."
-      },
-      "requiredForEveryCandidate": true,
-      "note": "Kevin Wed 12:35 addendum: observe catalyst reports that may contribute to action. Log catalystType + one-line summary for every shortlist and live entry candidate."
-    },
-    "rvolBaseline": {
-      "method": "median",
-      "lookbackDays": 15,
-      "dropMaxBeforeMeanFallback": true,
-      "timeOfDayAdjust": true,
-      "formula": "todays_volume / (baseline_daily * elapsed_session_fraction)",
-      "neverUseScannerRelativeVolumeColumn": true,
-      "scannerRvolNote": "scanner Relative volume column returned constant 1 on Thu premarket \u2014 always recompute from historicals",
-      "appliedAt": "2026-10-08T17:05:00-04:00",
-      "evidence": "SOAR mean RVOL 0.31 vs median 1.70 with 229k/5m; OLB mean inflated by 766M spike day; scanner column unusable"
-    },
-    "bidToStopEquivalentMaxSpreadPct": 1.0,
-    "bidToStopFreshQuoteRetries": 2,
-    "bidToStopRetryGapSec": 20,
-    "bidToStopNote": "With stop=ask*0.98 and skipRecycleIfBidWithinStopPct=1.0, bid must be > ask*0.9898 \u2248 effective spread \u2264~1.0%. The 8%/3% spread filters are looser and mostly dead code under this gate. Always gate on fresh get_equity_quotes (scanner Bid/Ask can be stale on fast movers: ONCO/QNME). Retry bid-to-stop up to 2 times ~20s apart before rejecting. Anchor remains ask_expected_fill (not padded buy limit).",
-    "minAvgSharesPer5MinBarWindowNote": "SUPERSEDED 2026-11-10 by minAvgSharesPer5MinBarByTime (all-day session). Prior: Keep 150k for live 09:30\u201311:00. Midday/afternoon volume is far below open (Thu paper: 5/9 then 12/15 quote-passers failed). Do not lower below 150k (authority min). Paper afternoon should expect near-zero fills under this floor.",
-    "supersededFrom2026-10-12": {
-      "afterTrailHwGe4LockPct": "superseded by tpModel trailing profit lock",
-      "exitIfBidUnderTpAfterHwGe4ManageTicks": "superseded by tpModel trailing profit lock"
-    },
-    "lateEntryCatalystGate": {
-      "enabled": false,
-      "fromEt": "10:00",
-      "minCatalystScore": 0.4,
-      "appliesTo": [
-        "entries",
-        "recycles",
-        "jump_scan_adds"
-      ],
-      "effectiveFrom": "2026-10-19",
-      "trackField": "lateCatalystBlockedWouldHaveWon",
-      "revertIf": "over 5 sessions from 2026-10-19, >=2 names blocked ONLY by this gate would have hit targetTP (min +2%) before -2% -> set enabled false",
-      "revertWindow": {
-        "started": "2026-10-19",
-        "sessions": 5,
-        "log": [
-          {
-            "date": "2026-10-20",
-            "blockedOnlyByGate": 0,
-            "wouldHaveWon": 0,
-            "note": "dormant (cutoff 10:00)"
-          }
-        ]
-      },
-      "status": "dormant_allday_scalp_2026-11-10",
-      "note": "Kept DORMANT under the all-day session (Kevin 2026-11-10 08:13 'maximize trading speed', fast in-and-out): a catalystScore >= 0.4 gate on every buy after 10:00 would block most midday scalps; TA 4/5 + VWAP + hard gates + dilution skip still apply all day. Revisit if afternoon (>=12:00) entries average below -0.30R over 5 sessions. Prior note: moot while newEntryCutoffEt=10:00; reactivates automatically if cutoff reverts to 10:50",
-      "disabledAt": "2026-11-10T08:40:00-05:00",
-      "disabledBy": "SILAS Bot under Kevin 2026-11-10 08:13 ET all-day scalp instruction (was dormant; prevents silent reactivation now that the cutoff is 15:45)"
-    },
-    "preferPctChangeBand": {
-      "min": 8.0,
-      "max": 15.0,
-      "rank": "names with day move 8-15% rank ahead of 15-25% (ranking bonus, not a gate)",
-      "from": "2026-10-22",
-      "by": "Kevin 2026-10-21 10:58 ET: apply backtest proposals 1,2,6,7 LIVE from Thu 2026-10-22; paper-test 3-5 (report /workspace/silas-quant/backtests/2026-10-21-price-band-budget/report.md)"
-    },
-    "minAvgSharesPer5MinBarByTime": [
-      {
-        "fromEt": "09:30",
-        "toEt": "10:30",
-        "shares": 100000,
-        "dollars": 1500000
-      },
-      {
-        "fromEt": "10:30",
-        "toEt": "11:30",
-        "shares": 100000,
-        "dollars": 1000000
-      },
-      {
-        "fromEt": "11:30",
-        "toEt": "14:00",
-        "shares": 200000,
-        "dollars": 500000
-      },
-      {
-        "fromEt": "14:00",
-        "toEt": "15:00",
-        "shares": 75000,
-        "dollars": 750000
-      },
-      {
-        "fromEt": "15:00",
-        "toEt": "15:45",
-        "shares": 100000,
-        "dollars": 1000000
-      }
-    ],
-    "minAvgSharesPer5MinBarByTimeNote": "All-day session (Kevin 2026-11-10 08:13 ET). The 150k shares / $1.5M per 5m floor was tuned on the 09:30-11:00 open (config minAvgSharesPer5MinBarWindowNote: Thu Oct 8 paper afternoon had 5/9 then 12/15 quote-passers fail the 150k floor -> near-zero midday fills). US intraday volume is U-shaped: per-5m volume midday is roughly 1/3 of the first 30 min and recovers into the close, so the floor scales with time of day: 150k (09:30-10:30) / 100k (10:30-11:30) / 50k minimum (11:30-14:00) / 75k (14:00-15:00) / 100k (15:00-15:45); fractional dollar floor scaled the same ($1.5M/$1.0M/$0.5M/$0.75M/$1.0M). ta.py applies the band (output liqFloor). Our orders are ~$51, so the floor is tape quality, not fill size; the -2% resting stop, bid-to-stop (~1% effective spread) and TA 4/5 gates are unchanged. revertIf: if after 5 sessions trades entered under a band below 150k average below -0.30R or show stop slippage worse than 1% past the stop on 2+ trades -> raise that band by 25k.",
-    "noRebuyAfterLossSameDay": true,
-    "noRebuyAfterLossSameDayNote": "Evidence (all live history 2026-10-06..11-10): 6 same-day re-buys of a symbol that had just closed at a loss \u2192 0 wins, \u2212$2.65 (OPK\u00d72, QTEX, AHT, BW, LCID); first entries 48 trades +$0.81. Recycling a WINNER stays allowed (allowSameSymbolRecycleIfCriteriaMet). Kevin 2026-11-10 16:07 ET: \"Use results for your logic set. Adjust and improve accordingly... Remove all rule sets that hinder reaching goal...\"",
-    "bidToStopPct": -2.0,
-    "bidToStopPctNote": "2026-11-13 higher-risk: ta.py bidToStop spread-equivalent hard filter stays anchored at ask\u00d70.98 (unchanged) even though the soft stop/decision point moved to \u22123%"
-  },
-  "manage": {
-    "pollMinutes": 5,
-    "stopExitMode": "marketable_limit_aggressive",
-    "maxSlippagePastStopPct": 3.0,
-    "trailAfterPlus2Pct": false,
-    "noNewEntriesAfterEt": "15:45",
-    "hardStopEt": "15:50",
-    "trailAfterPlusPct": 2.0,
-    "restTakeProfitLimitOnFill": false,
-    "brokerSync": {
-      "sourceOfTruth": "broker",
-      "reconcileEveryTick": true,
-      "positionsCall": "get_equity_positions(account_number=${BROKER_ACCOUNT_NUMBER})",
-      "ordersCall": "get_equity_orders(account_number=${BROKER_ACCOUNT_NUMBER}, created_at_gte=<today 09:00 ET in UTC>) -> open states: new, queued, confirmed, unconfirmed, partially_filled",
-      "ownAllAgenticEquity": true,
-      "adoptUntracked": {
-        "stopPct": -2.0,
-        "takeProfitPct": 2.0,
-        "anchor": "average_buy_price",
-        "honorExplicitStateStopTp": true,
-        "countsTowardMaxPositions": true,
-        "countsTowardMaxRoundTrips": true,
-        "restTpIfMissing": false,
-        "restStopIfMissing": true,
-        "takeProfitMode": "tpModel targetTP (floor takeProfitPct 2.0) from 2026-10-12"
-      },
-      "dropStateOnlyPositionsNotAtBroker": true,
-      "flattenScope": "all_equity_positions_in_account",
-      "postHardStop": "cancel_all_open_equity_orders_then_sell_all_shares",
-      "cancelBeforeSell": true,
-      "verifyCancelledBeforeSell": true,
-      "sellQtyField": "shares_available_for_sells",
-      "flattenLimitBelowBidPct": [
-        3.0,
-        6.0,
-        10.0,
-        15.0,
-        20.0
-      ],
-      "flattenMaxAttempts": 5,
-      "flattenRetryWaitSeconds": 15,
-      "flattenDoneWhen": "get_equity_positions empty AND zero open equity orders",
-      "flattenNeverDeferToLaterRun": true,
-      "postHardStopVerifyUntilEt": "16:00"
-    },
-    "armRestingStopWhenBidWithinStopPct": 1.0,
-    "restingStopMode": "stop_on_fill_trailing_profit_lock_tp_within_0.5pct (config.tpModel) from 2026-10-12",
-    "restingStopLimitBelowStopPct": 3.0,
-    "neverBothTpAndStopResting": true,
-    "stopArmCheckImmediatelyAfterFill": true,
-    "manageOffsetMinutes": 2,
-    "enforceHw4LockNotJustBreakeven": true,
-    "restStopLimitOnFill": true,
-    "armTpWhenBidAboveStopPct": 2.0,
-    "roundTakeProfitUpToNextCent": true,
-    "dualManage": {
-      "manageA": {
-        "routineId": "equity-am-sub-2-manage",
-        "cron": "CRON_TZ=America/New_York 4,9,14,19,24,29,34,39,44,49,54,59 9-15 * * 1-5",
-        "note": "primary manage; hours 9-15 discretionary"
-      },
-      "manageB": {
-        "routineId": "equity-am-sub-2-manage-b",
-        "cron": "CRON_TZ=America/New_York 6,11,16,21,26,31,36,41,46,51,56 9-15 * * 1-5",
-        "offsetMinutes": 2,
-        "note": "SECOND manage offset +2 min; hours 9-15 discretionary"
-      },
-      "note": "Hours 9-15 (discretionary; cronsExtendedConfirmed true)."
-    },
-    "trailNote": "With TP +2%, trail BE is secondary: leave resting TP when hw approaches +2%; if holding past +2% without TP fill, exit aggressively at/near +2%.",
-    "exitAggressivelyIfHwPastTpWithoutFill": true,
-    "exitsOnlyFromEt": "15:45",
-    "hardFlattenReasonCodes": [
-      "hard_flatten_1550",
-      "late_hard_flatten",
-      "late_hard_flatten_1555"
-    ],
-    "leanTick": {
-      "targetWallMinutes": 4,
-      "maxToolCallsTarget": 5,
-      "steps": [
-        "preview_scan with scan.workingFilters",
-        "batched 5m historicals for quote-passers near avg5m floor",
-        "compute TA via ${HELPERS_DIR}/ta.py",
-        "fresh get_equity_quotes for final candidates only",
-        "SEC/catalyst only for full passers"
-      ],
-      "reuseAvg5mIfPriorTickBelowPctOfFloor": 10.0,
-      "dailyVolumeCachePath": "data/equity-paper/daily_vol_cache_{sessionDate}.json",
-      "persistEveryDailyFetch": true,
-      "selfSyncBrokerEveryTick": true,
-      "doNotRelyOnEveryCronSlot": true,
-      "note": "Thu paper: 5-min cron fired ~1x per 45\u201390 min (lags 156\u2013222s). Resting stop-limits protect; every tick must self-sync from broker."
-    },
-    "jumpScanPrimaryAfterEt": "10:30",
-    "jumpScanPrimaryNote": "After 10:30 ET morning shortlist is stale (Thu: none of KAPA/BATL/VNTG/BQ/GIFT still in 8\u201360% gainers by midday). Prefer live gainers jump-scan; shortlist advisory only.",
-    "restingStopModeLegacy": "stop_on_fill_swap_to_tp",
-    "supersededFrom2026-10-12": {
-      "trailAfterPlus2Pct": "superseded by config.tpModel (trailing stop from +2%, TP only within 0.5% of targetTP)",
-      "trailAfterPlusPct": "superseded by config.tpModel (trailing stop from +2%, TP only within 0.5% of targetTP)",
-      "restTakeProfitLimitOnFill": "superseded by config.tpModel (trailing stop from +2%, TP only within 0.5% of targetTP)",
-      "armRestingStopWhenBidWithinStopPct": "superseded by config.tpModel (trailing stop from +2%, TP only within 0.5% of targetTP)"
-    },
-    "allDayNote": "From 2026-11-10 (Kevin 08:13 ET): buys/recycles 09:35-15:45, exits only 15:45-15:50, flatten 15:50, flat-verify to 16:00. Every manage tick with a free slot runs a fresh live discovery scan (jump-scan primary after 10:30) + ta.py, and may buy any passer. RT cap 20."
-  },
-  "maxRoundTrips": 9,
-  "requireConfirm": true,
-  "quietManage": true,
-  "reportAtEt": "16:05",
-  "dailyRevise": true,
-  "scaleWithBank": true,
-  "notionalPerNameMode": "half_bank",
-  "goal": {
-    "primary": "grow bank",
-    "metric": "wholeShareRange = available cash",
-    "setBy": "Kevin 2026-10-09 10:47 ET",
-    "note": "Grow the bank to widen the whole-share buy range (whole shares allowed when one share \u2264 available cash). report.md shows daily bank, whole-share range and week-over-week change (vs week-desk.priorWeekEndCash); flatten Phase C ranks proposals by expectedBankGrowthUsd within LOCKS."
-  },
-  "sizingRule": {
-    "effectiveFrom": "2026-10-12",
-    "lock": true,
-    "setBy": "Kevin 2026-10-09 10:46 ET (confirmed)",
-    "text": "If a share's price is \u2264 available cash (the bank), buy WHOLE shares only, even when the stock is fractional-eligible. If the price is > available cash, the name qualifies ONLY if Robinhood marks it fractional-eligible, and then it's a fractional/dollar-amount buy; otherwise skip it.",
-    "availableCash": "broker cash / buying power read in the same run (= bankUsd when flat)",
-    "wholeShareQty": "allocation = availableCash / freeSlots (freeSlots = maxPositions - open positions - open buy orders, min 1); qty = floor(allocation / ask); if 0 and ask <= availableCash -> 1; then cut qty until qty x buyLimit <= availableCash x 0.99. Never fractional in that lane.",
-    "openQuestionForKevin": null,
-    "resolvedNote": "openQuestion cleared 2026-10-09 15:29 ET: L1 + live entries/manage already buy 1 whole share when ask <= availableCash"
-  },
-  "fractionalLane": {
-    "enabled": true,
-    "startDate": "2026-10-12",
-    "symbols": "ANY symbol Robinhood marks fractional-eligible at entry time",
-    "approvedBy": [
-      "Kevin 2026-10-09 10:44 ET (TSLA/NVDA)",
-      "Kevin 2026-10-09 10:45 ET (all eligible)",
-      "Kevin 2026-10-09 10:46 ET (sizing rule)"
-    ],
-    "eligibilityCheck": {
-      "tool": "get_equity_tradability",
-      "require": {
-        "tradeable": true,
-        "state": "active",
-        "account_type_tradability": "tradable",
-        "fractional_tradability": "tradable"
-      },
-      "rejectValues": [
-        "position_closing_only",
-        "untradable",
-        "missing"
-      ],
-      "when": "same run as the buy; never cached"
-    },
-    "appliesWhen": "ask > availableCash (sizing lock)",
-    "orderType": "market",
-    "sizing": "dollar_amount",
-    "marketHours": "regular_hours",
-    "timeInForce": "gfd",
-    "dollarAmount": "min(notionalPerNameUsd, availableCash \u00d7 0.95, availableCash \u00d7 0.50 unless protection.brokerStopProven) rounded down to cent",
-    "minOrderUsd": 1.5,
-    "maxPositionsShared": 2,
-    "roundTripCapShared": 9,
-    "window": {
-      "noNewBuysAtOrAfterEt": "10:50",
-      "flatByEt": "11:00"
-    },
-    "stopLossPct": -3.45,
-    "takeProfitPct": 2.0,
-    "taRequired": {
-      "09:30-10:30": 3,
-      "10:30-10:50": 4
-    },
-    "gatesUnchanged": [
-      "dayPct 8\u201360 (recycle 8\u201340)",
-      "last \u2265 0.10",
-      "spread",
-      "RVOL \u2265 1.5",
-      "liquidity: whole-share lane 150k shares/5m; fractional lane $1.5M/5m dollar-volume (fractionalLane.liquidity)",
-      "bidToStop 1.0%",
-      "TA",
-      "chase veto",
-      "coverage",
-      "catalyst",
-      "dilution skip"
-    ],
-    "waivedGates": [
-      "ta.py hard wholeShare (only failing hard check, eligible fractional candidate)"
-    ],
-    "stopOnFill": {
-      "supported": "NO: Robinhood rejects stop and stop-limit orders on fractional quantities (Invalid trigger for fractional order, 2026-10-22). Do not retry (fractionalWatch.retryBrokerStop=false).",
-      "reason": "Robinhood MCP place/review_equity_order: fractional quantities only on type=market + regular_hours; dollar_amount only with market; tax-lot note excludes 'fractional limit orders'. Robinhood take-profit/stop-loss order: whole-share quantities only.",
-      "fallback": "FRACTIONAL 1-MINUTE STOP WATCH (config fractionalWatch, Kevin 2026-10-22): virtual stop/trail/TP checked about every 60 s inside the manage tick (and the buying run), market sell of the full quantity; stale guard + 120 s post-fill watch kept.",
-      "weakerProtection": true,
-      "weakerProtectionNote": "No resting order at the broker: between routine runs a fractional position has NO stop. Manage crons lagged 156\u2013222 s and fired ~1 per 45\u201390 min on paper, so a gap or fast drop can blow far past \u22122%. Exits are market orders handled Not Held (no price cap). Logged in state.weakerProtectionLog."
-    },
-    "postFillWatchSeconds": 120,
-    "staleWatchMinutes": 6,
-    "scanLeg": {
-      "enabled": true,
-      "lastFilter": [
-        "<availableCash + 0.01>",
-        "1000"
-      ],
-      "maxRows": 10,
-      "jumpScanMaxRows": 5,
-      "note": "same %change/instrument filters; names above the bank, fractional-eligible only; all gates unchanged",
-      "volumeFilter": {
-        "live": {
-          "filter_type": "FILTER_TYPE_VOLUME",
-          "predicate": "PREDICATE_GREATER_THAN",
-          "values": [
-            "1000000"
-          ],
-          "interval": "1d"
-        },
-        "premarket": {
-          "filter_type": "FILTER_TYPE_VOLUME",
-          "predicate": "PREDICATE_GREATER_THAN",
-          "values": [
-            "300000"
-          ],
-          "interval": "1d"
-        }
-      }
-    },
-    "expandedUniverseProposal": {
-      "status": "liquidity floor part APPLIED 2026-10-09 11:44 ET (Kevin standing authority): $1.5M/5m dollar floor for the fractional lane only; rest unchanged",
-      "enabled": false,
-      "idea": "liquid gappers above the bank with gates suited to larger names",
-      "scanFilters": [
-        {
-          "filter_type": "FILTER_TYPE_INSTRUMENT_TYPE",
-          "predicate": "PREDICATE_EQUAL",
-          "values": [
-            "STOCK"
-          ]
-        },
-        {
-          "filter_type": "FILTER_TYPE_PERCENT_CHANGE_FROM_CLOSE",
-          "predicate": "PREDICATE_BETWEEN",
-          "values": [
-            "0.04",
-            "0.40"
-          ],
-          "interval": "1d"
-        },
-        {
-          "filter_type": "FILTER_TYPE_LAST",
-          "predicate": "PREDICATE_BETWEEN",
-          "values": [
-            "2.00",
-            "1000"
-          ]
-        },
-        {
-          "filter_type": "FILTER_TYPE_VOLUME",
-          "predicate": "PREDICATE_GREATER_THAN",
-          "values": [
-            "2000000"
-          ],
-          "interval": "1d"
-        }
-      ],
-      "proposedGateChanges": {
-        "minPctChangeAtEntry": 4.0,
-        "liquidityFloor": "avg 5m dollar volume \u2265 $1,000,000 instead of 150k shares",
-        "spreadMaxPct": 0.3
-      },
-      "keep": [
-        "TA \u22653/5 (\u22654/5 from 10:30)",
-        "catalyst check",
-        "dilution skip",
-        "SL \u22122 / TP +2",
-        "window",
-        "max 2",
-        "RT 6"
-      ],
-      "evidence": "preview_scan Fri 2026-10-09 10:46 ET: 27 rows (HUM, MRNA, COIN, ORCL, CCI, FSLY, NVAX, NIO, \u2026); 7 of 27 were \u2265 8% (the current day% gate); 8 of a 10-name sample were fractional-tradable (VIVK, SAIQ position_closing_only)",
-      "blocker": "ta.py applies one global entryFilters set (day% 8\u201360, 150k shares/5m); lane-specific thresholds need a ta.py change that has NOT been built"
-    },
-    "evidence": {
-      "at": "2026-10-09T10:46-04:00",
-      "tradability": "TSLA, NVDA fractional tradable (extended-hours fractional true). Scan names: 09:10 shortlist+alternates 4/10 tradable (NAMM, CNCK, SMJF, QSI); 06:30 list 5/10 (HOVR, KDK, SLNH, SUIG, BATL); 'unaffordable' names 1/10 (AEC); rest position_closing_only",
-      "previewTest": "review_equity_order returned order_checks {} for a 0.01-share TSLA stop_market sell (no position held) and a 0.01-share TSLA limit buy: preview does not validate fractional order-type rules"
-    },
-    "priceCapLifted": "names above available cash allowed if fractional-eligible (liquid-gapper leg); all gates kept",
-    "liquidity": {
-      "enabled": true,
-      "lane": "fractional only (ask > availableCash)",
-      "minAvgDollarPer5MinBar": 1500000,
-      "basis": "mean of volume \u00d7 close over the last 3 complete RTH 5m bars (ta.py key liqDollar; pass --cash <availableCash>)",
-      "wholeShareLaneUnchanged": "minAvgSharesPer5MinBar 150000",
-      "justification": "Fri Oct 9 data: whole-share passers at 150k shares \u00d7 $1\u20135 = ~$0.15\u20130.57M per 5m; $1.5M is ~3\u00d7 the top of that, i.e. stricter in dollars. Fractional shortlist 09:45\u201310:40: FSLY $2.5\u20136.7M, NVAX $1.9\u20134.2M, CCI $3.0\u201315.5M pass; CCC $1.3\u20131.7M borderline (fails after 09:45). Desk orders are \u2264 $1.89, so the floor is about tape quality, not our size.",
-      "approvedBy": "Kevin standing authority 2026-10-09 11:44 ET",
-      "effective": "2026-10-12"
-    },
-    "protection": {
-      "policy": "deskWatch1m",
-      "attempts": [
-        "type=stop, stop_price=stop, full fractional qty, gfd, regular_hours",
-        "if rejected: type=stop_limit, limit = stop \u00d7 0.97 (once)"
-      ],
-      "onBothRejected": "(superseded 2026-10-22) desk_monitored with the FRACTIONAL 1-MINUTE STOP WATCH (config fractionalWatch)",
-      "takeProfit": "virtual (market sell after cancelling the broker stop) on every fractional path",
-      "log": "state.fractionalProtectionLog[] {at, routine, symbol, qty, attempts[], protectionPath}; desk_monitored also state.weakerProtectionLog[]",
-      "brokerStopProven": false,
-      "brokerStopProvenAt": null,
-      "riskControl": {
-        "deskMonitoredMaxPctOfAvailableCash": 50,
-        "maxDeskMonitoredPositions": 1,
-        "reason": "crons ran 20\u201330 min late on Oct 8\u20139, so a desk-monitored stop can be unwatched for that long",
-        "rule": "size fractional buys \u2264 50% of available cash until brokerStopProven; if a position ends up desk_monitored above 50%, market-sell the excess (frac_risk_trim); no new fractional buy while a desk_monitored (or path-unknown) fractional position is open"
-      },
-      "evidence": "MCP place_equity_order description: fractional quantities only with type=market + regular_hours. Oct 9 review_equity_order preview did not reject a fractional stop (preview is not proof).",
-      "approvedBy": "Kevin standing authority 2026-10-09 11:44 ET",
-      "policyPrior": "brokerStopFirst",
-      "policyNote": "From 2026-10-22 (Kevin): no broker stop/stop-limit attempts on fractional quantities (Robinhood rejects them); protection = config fractionalWatch (1-minute in-tick desk watch). brokerStopProven stays false, so the 50% cap stays."
-    },
-    "watchGapGate": {
-      "enabled": true,
-      "lookbackMinutes": 15,
-      "maxFireGapMinutes": 6,
-      "setBy": "Kevin 2026-10-28 11:14 ET (chat: 'whatever you need to do' toward 5% win)",
-      "reason": "2026-10-28 SKHY stale exit + VRT blind ~11 min",
-      "skipReason": "fractional_watch_gap"
-    }
-  },
-  "tpModel": {
-    "effectiveFrom": "2026-10-12",
-    "setBy": "Kevin 2026-10-09 10:51 ET (confirmed)",
-    "lock": "HARD STOP from 2026-11-11 (Kevin 16:28): resting stop_limit trigger \u22124.5% / limit \u22125% (entry\u00d70.955 / \u00d70.95); \u22122% = chart-based recovery DECISION point (recovery.py, sell if score < recoveryModel.thresholdPct). TP dynamic per trade (floor tpModel.floorPct; trailing lock from +2% unchanged)",
-    "helper": "${HELPERS_DIR}/tp_model.py",
-    "stopPct": -4.5,
-    "floorPct": 5.0,
-    "cap": null,
-    "params": {
-      "atrPeriod": 14,
-      "atrInterval": "5minute",
-      "atrMultBase": 1.0,
-      "atrMultPerScore": 2.0,
-      "strongCatalystMin": 0.7,
-      "fibExtensions": [
-        1.272,
-        1.618
-      ],
-      "minOpeningLegPct": 4.0,
-      "trailActivatePct": 2.0,
-      "trailBreakevenPlusPct": 0.5,
-      "trailAtrMult": 1.0,
-      "trailReplaceMinStepPct": 0.25,
-      "tpSwitchWithinPct": 0.5,
-      "tpSwitchBackBelowPct": 1.0
-    },
-    "formulas": {
-      "stop": "fill \u00d7 0.955 (trigger), limit fill \u00d7 0.95",
-      "floor": "fill \u00d7 1.02",
-      "k": "atrMultBase + atrMultPerScore \u00d7 catalystScore (1.0\u20133.0)",
-      "T_atr": "fill + k \u00d7 ATR14(5m)",
-      "walls": "premarketHigh, priorDayHigh, hodSoFar, next 2 round numbers (step 0.05 <$1, 0.25 <$5, 0.50 <$10, 1 <$50, 5 \u2265$50), fib 1.272/1.618 of opening leg (\u22654%)",
-      "targetNormal": "catalystScore < 0.7: max(floor, min(T_atr, firstWall \u2212 1 tick))",
-      "targetStrong": "catalystScore \u2265 0.7: max(floor, T_atr, firstWallAtOrAfter(T_atr) \u2212 1 tick)",
-      "rounding": "UP to next cent (\u2265$1) / 0.0001 (<$1)",
-      "trailStop": "once bid \u2265 fill \u00d7 1.02: max(fill \u00d7 1.005, hw \u2212 1.0 \u00d7 ATR), never lowered; replace when +0.25% of fill and \u22651 tick",
-      "tpSwitch": "rest TP limit only when bid \u2265 targetTP \u00d7 0.995; back to trailing stop-limit when bid < targetTP \u00d7 0.99 or bid \u2264 activeStop \u00d7 1.01",
-      "neverBoth": true
-    },
-    "recordInState": [
-      "positions[].targetTP",
-      "positions[].tpReasoning",
-      "positions[].catalystScore",
-      "positions[].atr14_5m",
-      "positions[].trailStop",
-      "tpDecisions[]"
-    ],
-    "fallback": "tp_model failure \u2192 targetTP = floor, tpReasoning 'fallback_floor', errorsAutoFixed",
-    "fractional": "virtual targetTP + virtual trail with market sells (no resting orders possible)",
-    "research": "${DESK_ROOT}/2026-10-09-catalyst-tp-research.md",
-    "caveat": "parameters are priors from free sources + desk judgment, not fitted; judge on expectancy R",
-    "allDayNote": "unchanged: stop-on-fill -2%, trailing profit lock, TP within 0.5% of targetTP"
-  },
-  "catalystScore": {
-    "effectiveFrom": "2026-10-12",
-    "research": "${DESK_ROOT}/2026-10-09-catalyst-tp-research.md",
-    "weights": {
-      "fda_accelerated_or_unexpected_approval": 0.9,
-      "positive_topline_data": 0.7,
-      "earnings_beat_small_cap": 0.65,
-      "contract_quantified": 0.6,
-      "earnings_beat_large_cap": 0.5,
-      "uplisting_index_add": 0.45,
-      "fda_known_pdufa_approval": 0.4,
-      "short_squeeze_no_news": 0.3,
-      "contract_vague": 0.2,
-      "sympathy_or_no_news": 0.1,
-      "hype_pr": 0.1,
-      "offering": -1.0,
-      "reverse_split_30d": -0.5
-    },
-    "modifiers": {
-      "gapPctGt50": -0.2,
-      "confirmedBy8K6K": 0.1,
-      "rthBreakOfPremarketHighRisingVolume": 0.1,
-      "catalystOlderThanPriorClose": -0.1
-    },
-    "clamp": [
-      0,
-      1
-    ],
-    "skipIfBaseBelow": 0,
-    "usedFor": [
-      "entries/recycle ranking (replaces 'fresh positive catalyst first')",
-      "TP width k = 1.0 + 2.0 \u00d7 score",
-      "strong (\u22650.7) may target past the first wall"
-    ],
-    "sourcesNote": "free/unpaid sources only; ads, paid promos and prediction-market partnerships ignored; vendor free pages down-weighted"
-  },
-  "successGoal": {
-    "setBy": "Kevin 2026-10-09 10:51 ET",
-    "effectiveFrom": "2026-10-12",
-    "baseline": {
-      "period": "week 2: Mon 2026-10-05 \u2013 Fri 2026-10-09",
-      "roundTrips": 16,
-      "wins": 6,
-      "losses": 10,
-      "winRatePct": 37.5,
-      "avgWinR": 2.042,
-      "avgLossR": -2.132,
-      "expectancyR": -0.567,
-      "avgPnlPct": -1.134,
-      "rDefinition": "R = pnlPct / 2.0 (risk = locked 2% stop)",
-      "computedAt": "2026-10-09T11:42:58-04:00",
-      "source": "morning-session-2026-10-0[5-8](-final).json + today's morning-session.json roundTrips",
-      "caveat": "week-2 trades ran under older exit rules (SL \u22122.5/TP +7.5 early in the week, then \u22122/+2); small sample",
-      "note": "Historical week-2 baseline (16 RT, 37.5% win, expectancy \u22120.567R). Current prime directive is decision success: baseline 25.8%, goal 30.8% (see decisionObjective)."
-    },
-    "target": {
-      "winRatePct": 42.5,
-      "expectancyR": -0.517
-    },
-    "rule": "met when win rate \u2265 baseline + 5 pp OR expectancy \u2265 baseline + 0.05R (5 percentage points of R)",
-    "trackedIn": [
-      "report.md GOAL line",
-      "flatten scorecard 'Success goal vs week-2 baseline'"
-    ]
-  },
-  "weeklyAutoRoll": {
-    "enabled": true,
-    "cancelled": false,
-    "confirmedBy": "Kevin 2026-10-09 10:48 ET",
-    "until": "Kevin cancels",
-    "rollAt": "Friday flatten Phase C step 6 (after week report)",
-    "safetyNet": "scan.md step 1 rolls if Friday's roll was missed",
-    "note": "no 'confirm next week' gate; each Friday rolls week-desk + config to the next Mon\u2013Fri with confirmedForWeek true"
-  },
-  "report": {
-    "idempotencyFlag": "morning-session.json reportDeliveredFor (date); report exits quietly if = today",
-    "leanSpec": "\u22643 broker reads normal path, \u22644 fallback; no pagination; no trade history; no scorecard writes",
-    "rewrittenAt": "2026-10-09T11:46:52-04:00",
-    "format": "simple",
-    "simpleTemplate": "LIVE \u2014 <Day Mon D>: W/L a/b | $<startCash> \u2192 $<endCash> (<\u00b1$x.xx>)\nDecisions: <r>% correct today (<c>/<n>) | baseline 25.8% \u2192 goal 30.8%  [+ one ALERT line only if an escalation needs Kevin]",
-    "simpleFormatBy": "Kevin 2026-11-10 16:09 ET: \"Simple report daily. Win loss total. Final dollar vs starting dollar.\" (live cash only; deposits excluded)"
-  },
-  "stallExit": {
-    "enabled": true,
-    "effectiveFrom": "2026-10-15",
-    "afterMinutes": 14,
-    "maxHwPct": 1.0,
-    "appliesWhenRestingMode": [
-      "stop"
-    ],
-    "action": "cancel stop-limit \u2192 verify \u2192 sell limit at bid (retry bid\u00d70.97); fractional desk_monitored \u2192 market sell",
-    "exitReason": "stall_exit",
-    "approvedBy": "Kevin standing authority 2026-10-14",
-    "evidence": [
-      "Mon 2026-10-12 CYPH",
-      "Tue 2026-10-13 FRMI #3: 50 min, max +0.26%, \u22122.04%",
-      "Wed 2026-10-14 MXCT: 19 min, never above entry"
-    ],
-    "revertIf": "over 5 sessions from 2026-10-15, \u22652 stall-exited names would have hit TP before the stop \u2192 enabled=false"
-  },
-  "stopRounding": {
-    "rule": "fill \u00d7 0.98 rounded UP to the cent (toward the fill)",
-    "effectiveFrom": "2026-10-15",
-    "example": "FFAI 1.2283\u00d70.98=1.2037 \u2192 stop 1.21 not 1.20",
-    "rationale": "realized risk never exceeds \u22122%"
-  },
-  "standingAuthority": {
-    "procedureLevelProposals": "wake parent (parent decides); never 'Needs your OK' to Kevin",
-    "appliedConfigTweaksLabel": "decided by desk",
-    "updatedAt": "2026-10-14T11:28:01-04:00",
-    "independentOperation": {
-      "by": "Kevin 2026-11-10 16:11 ET: \"Move independently if I don't respond to message. Only stop system on command.\"",
-      "rule": "The desk never waits on Kevin for any decision: when a question would go to him it decides within the rules, proceeds and logs the decision (decided by desk). The system stops (desk.paused / liveMode.armed false) ONLY on Kevin's explicit command. The kill switch only blocks new buys for that day and resets next day (trading rule, not a system stop).",
-      "systemStopsOnlyOn": [
-        "Kevin's explicit command (desk.paused / liveMode.armed false)",
-        "bankStop: live total equity \u2264 50% of baseline (Kevin 2026-11-10 16:24 ET)"
-      ]
-    },
-    "autoLiveAtOpen": "Kevin 2026-11-10 16:09 ET (chat): \"Arm live at 9:30 am without live confirmation.\" (standing, every trading day)"
-  },
-  "newEntryCutoffEt": "15:45",
-  "newEntryCutoff": {
-    "et": "15:45",
-    "effectiveFrom": "2026-10-19",
-    "appliesTo": [
-      "entries",
-      "entries-backup",
-      "manage recycle",
-      "jump_scan_adds"
-    ],
-    "rule": "no buys at or after 15:45 ET (all-day session from 2026-11-10; was 10:00)",
-    "unchanged": [
-      "exits",
-      "stallExit",
-      "15:45-15:50 exits only",
-      "15:50 flatten",
-      "15:55 hard-flatten safety net"
-    ],
-    "locksOuterBound": "10:50",
-    "trackField": "cutoff1000Blocked",
-    "revertIf": "over 5 sessions from 2026-10-19, if candidates blocked by the 10:00 cutoff (10:00-10:50) would have netted positive (each scored +2% before -2% = win, else loss) -> revert newEntryCutoffEt to 10:50",
-    "revertTo": "10:50",
-    "revertWindow": {
-      "started": "2026-10-19",
-      "sessions": 5,
-      "log": [
-        {
-          "date": "2026-10-20",
-          "blockedRows": 47,
-          "symbols": [
-            "CYPH",
-            "HSAI",
-            "HTZ",
-            "HUIZ",
-            "MYGN",
-            "ORBS",
-            "QTEX",
-            "RCUS",
-            "VNET"
-          ],
-          "netWouldHave": "pending (session runs to 15:30 under todayOverride; score at done)",
-          "note": "09:30-10:00 lost to failed routines; all blocks were TA/hard-gate fails, not the cutoff alone"
-        },
-        {
-          "date": "2026-10-21",
-          "blockedRows": 0,
-          "netWouldHave": "n/a",
-          "note": "cutoff suspended by todayOverride stop-only test after 10:05; cutoff becomes owner-locked strict from 2026-10-22 (P7), so this revert check is moot"
-        }
-      ]
-    },
-    "approvedBy": "Kevin in chat 2026-10-16 13:58 ET"
-  },
-  "cashFlowRule": {
-    "text": "Deposits/withdrawals are never P&L. Daily trading P&L = broker get_realized_pnl (equity, day); cash check = endCash - startCash - depositsToday. Week trading P&L = currentCash - weekStartBank - deposits after week start. WoW % = week trading P&L / weekStartBank.",
-    "detect": "scan step 4: if get_portfolio/get_accounts shows pending_deposits or cash - prior endCash differs by more than |realized pnl| + $0.05 with no open positions, record week-desk.deposits[] {at, amountUsd, type} and set day.depositsUsd",
-    "addedAt": "2026-10-17T15:20:00-04:00"
-  },
-  "discretion": {
-    "enabled": true,
-    "effectiveFrom": "2026-10-19",
-    "approvedBy": "Kevin in chat 2026-10-17 16:44 ET (discretionary session) + 16:46 ET (daily target)",
-    "quote": "Go right to the floor when the market opens and execute. Give me the recap when you stop. Use your own discretion to decide when to pull the plug on trading for the day. If you go long after the deadline that's fine if you can justify it. You're in control.",
-    "entriesFromEt": "09:35",
-    "defaultNewBuyCutoffEt": "15:45",
-    "lateBuy": {
-      "untilEt": "11:30",
-      "blackout": [
-        "10:55",
-        "11:01"
-      ],
-      "minTaPass": 3,
-      "minCatalystScore": 0.4,
-      "requireAboveSessionVwap": true,
-      "requireNotHalted": true,
-      "requireJustification": true,
-      "fractionalLaneUntilEt": "10:50",
-      "taPyArgs": "--no-new-after 11:30",
-      "enabled": false,
-      "disabledFrom": "2026-10-22",
-      "disabledBy": "Kevin 2026-10-21 10:58 ET: apply backtest proposals 1,2,6,7 LIVE from Thu 2026-10-22; paper-test 3-5 (report /workspace/silas-quant/backtests/2026-10-21-price-band-budget/report.md) (proposal 7: strict 10:00 cutoff, no D2 late buys on normal days)"
-    },
-    "holdPast1100": {
-      "checkAtEt": "10:57-10:59",
-      "minPctAboveFill": 1.0,
-      "requireAboveSessionVwap": true,
-      "requireBrokerStopAtLeastBreakevenOrTrail": true,
-      "breakevenRounding": "fill rounded UP to the cent",
-      "maxUntilEt": "15:45",
-      "desk_monitored_fractional": "never held",
-      "status": "moot from 2026-11-10 (all-day session; no 11:00 flatten)"
-    },
-    "lateHardFlattenEt": "15:50",
-    "lateHardFlattenReason": "hard_flatten_1550",
-    "killSwitch": {
-      "dayPnlPctOfStartBank": -5.0,
-      "consecutiveStopOuts": 2,
-      "lossStopReasons": [
-        "resting_stop_limit",
-        "stop_aggressive",
-        "virtual_stop_market",
-        "virtual_stale_exit",
-        "trail_stop (pnl<0)",
-        "trail_stop_aggressive (pnl<0)"
-      ],
-      "sticky": true,
-      "action": "no new buys; manage exits only"
-    },
-    "dailyTarget": {
-      "pctOfStartBank": 5.0,
-      "lockFloorPct": 3.0,
-      "note": "goal only; never loosens a guardrail or forces an entry",
-      "protectMode": {
-        "raiseStopsToLockFloor": true,
-        "newBuys": "A+ only: TA>=4/5 AND catalystScore>=0.4 AND above session VWAP; size so a full stop leaves day >= floor",
-        "floorBreach": "halt (protect_floor_3pct) + hard flatten everything (protect_floor_flatten)"
-      }
-    },
-    "done": {
-      "when": [
-        "flat AND halted (kill switch)",
-        "flat at/after the 15:50 flatten"
-      ],
-      "fields": [
-        "discretion.doneAt",
-        "discretion.doneReason",
-        "doneAt",
-        "doneReason"
-      ]
-    },
-    "report": "sends once (reportDeliveredFor) only after doneAt; fallback alert send at >=15:50 if not done",
-    "cronsExtendedConfirmed": true,
-    "cronsExtendedNote": "false until Kevin extends manage crons to 9-15 and adds the 15:45/15:50 flatten-backup fires. While false: no holds past 11:00 and no late buys after 10:55 (everything flat at 11:00).",
-    "procedureBlock": "${DESK_ROOT}/live/_build.py DISC (D0-D6)",
-    "backup": "${DESK_ROOT}/live/backups/pre-discretion-2026-10-17/",
-    "cronsExtendedConfirmedNote": "Routines extended 2026-10-17 ~17:45 ET by Engineering Bot: manage a/b 9-15, flatten-backup 10:57+15:45/15:50, report 11:15-14:45 half-hourly + 15:52 (sends once when done), scan 05:30.",
-    "cronsExtendedConfirmed_note_2026-10-20": "Kevin 10:08 ET: run until 4 today; manage crons run to 15:59 per README",
-    "todayOverride_2026-10-20_archived": {
-      "date": "2026-10-20",
-      "lastNewBuy": "15:30",
-      "skip1100Flatten": true,
-      "skipBlackout1055_1101": true,
-      "hardFlatten": "15:45",
-      "holdCheckD3": "not needed (no 11:00 flatten today)",
-      "taPyArgs": "--no-new-after 15:30",
-      "requiresD2Gates": true,
-      "killSwitchAndTargetUnchanged": true,
-      "approvedBy": "Kevin in chat 2026-10-20 10:08 ET: 'Run until 4 to make up for lost time.' (relayed by parent)",
-      "note": "Dated override: applies ONLY when today (ET) == date; any other date ignores it and the normal discretion rules apply. 11:00 flatten and 10:57/11:08 flatten-backups place NO sells today (they still do broker sync/protection checks, scorecard/dailyReport partial and revise). Late buys 10:00-15:30 via D2 gates. HARD FLATTEN ALL at 15:45 (15:45/15:50 backups stay). D6 done = flat AND (halted OR now>=15:30) or flat after 15:45."
-    },
-    "cronsExtendedConfirmed_note_2026-10-21": "Kevin 10:05 ET: re-run today until 4; manage crons already run to 15:59",
-    "strictCutoff": {
-      "from": "2026-10-22",
-      "newBuyCutoffEt": "15:45",
-      "doneWhenFlatFromEt": "15:50",
-      "note": "no new buys at/after 10:00 ET on normal days; D3 holds past 11:00 still allowed via the 10:57 hold check; default 11:00 flatten unchanged; D6 done = flat AND (halted OR now >= 11:00) or flat after 15:45. A dated todayOverride still governs on its date."
-    },
-    "allDaySession": {
-      "enabled": true,
-      "from": "2026-11-10",
-      "by": "Kevin 2026-11-10 08:13 ET: \"Maximize your trading speed and run it all day till 4:00\" + \"In-N-Out Bob and weave baby\" (fast in-and-out scalps all session)",
-      "newBuysEt": [
-        "09:35",
-        "15:45"
-      ],
-      "exitsOnlyEt": [
-        "15:45",
-        "15:50"
-      ],
-      "flattenEt": "15:50",
-      "hardFlattenSafetyNetEt": "15:55",
-      "flatVerifyUntilEt": "16:00",
-      "reportEt": "16:00-16:15 (after the desk is done)",
-      "noBlackout1055_1101": true,
-      "no1100Flatten": true,
-      "d2LateBuys": "not needed (the normal window runs to 15:45); discretion.lateBuy stays disabled",
-      "d3HoldCheck": "moot (no 11:00 flatten); everything is flat by 15:50",
-      "fractional": "desk-monitored fractional positions exit at 15:45 (no broker stop; reconcile.py fracwatch stops at 15:45)",
-      "manageEveryFire": "desk_clock runs manage on every 5-min fire 09:30-15:45 even when flat; a free slot gets a fresh live discovery scan + TA on that tick",
-      "killSwitch": "unchanged: 2 consecutive loss stops OR -5% day halts new buys for the rest of the day (sticky); positions keep normal exits",
-      "rtCap": 9
-    }
-  },
-  "universePolicy": {
-    "since": "2026-10-21",
-    "standing": true,
-    "by": "Kevin 10:06 ET: 'Remove restrictions on what you trade.'",
-    "universe": "ANY US-listed common stock or ETF priced >= $2.00 (fractional allowed for higher-priced names, sized from live buying power); entry day move 8-25% (prefer 8-15%)",
-    "removed": [
-      "sub-$2 / priceMax cap",
-      "8-60% day-move band",
-      "shortlist-only restriction",
-      "'chasing' movers-only filter"
-    ],
-    "sources": "whole market: Robinhood movers/top movers, top volume, sector leaders, large caps with catalysts (scan + jump-scan + manage-tick discovery)",
-    "kept": [
-      "cash equity longs only (no crypto, options, shorts, margin)",
-      "-2% resting broker stops on every fill",
-      "max 2 positions + buying-power sizing (normal days)",
-      "dilution-filing rejection (normal days)",
-      "day loss stop -5% / 2 consecutive stop-outs (normal days)",
-      "15:45 hard flatten"
-    ],
-    "configChanges": {
-      "at": "2026-10-21T10:12:00-04:00",
-      "previous": {
-        "minPctChangeAtEntry": 8.0,
-        "maxPctChangeAtEntry": 60.0,
-        "maxPctChangeAtRecycle": 40.0,
-        "minLastPriceAtEntry": 0.1,
-        "chaseHardVeto": true,
-        "scan.prefilterGapPctMin": 5.0,
-        "scan.prefilterGapPctMax": 60.0
-      },
-      "now": {
-        "minPctChangeAtEntry": -100.0,
-        "maxPctChangeAtEntry": 10000.0,
-        "maxPctChangeAtRecycle": 10000.0,
-        "minLastPriceAtEntry": 0.01,
-        "scan.prefilterGapPctMin": -100.0,
-        "scan.prefilterGapPctMax": 10000.0,
-        "chaseHardVeto": "entryFilters.ta.chaseHardVeto.enabled=false"
-      },
-      "note": "day-move band and chase veto removed (standing); shortlist is advisory only; any US common stock/ETF eligible. LOCKED: no dailyRevise may re-tighten these without Kevin.",
-      "supersededBy2026-10-22": {
-        "previous": {
-          "minLastPriceAtEntry": 0.01,
-          "minPctChangeAtEntry": -100.0,
-          "maxPctChangeAtEntry": 10000.0,
-          "maxPctChangeAtRecycle": 10000.0
-        }
-      }
-    },
-    "moveBandNormalDays": {
-      "from": "2026-10-22",
-      "minPctChangeAtEntry": 8.0,
-      "maxPctChangeAtEntry": 25.0,
-      "prefer": "8-15%",
-      "replaces": "-100..10000 written 2026-10-21 10:12",
-      "by": "Kevin 2026-10-21 10:58 ET: apply backtest proposals 1,2,6,7 LIVE from Thu 2026-10-22; paper-test 3-5 (report /workspace/silas-quant/backtests/2026-10-21-price-band-budget/report.md)"
-    },
-    "minLastPrice": {
-      "from": "2026-10-22",
-      "usd": 2.0,
-      "by": "Kevin 2026-10-21 10:58 ET: apply backtest proposals 1,2,6,7 LIVE from Thu 2026-10-22; paper-test 3-5 (report /workspace/silas-quant/backtests/2026-10-21-price-band-budget/report.md)"
-    }
-  },
-  "eventVeto": {
-    "enabled": true,
-    "from": "2026-10-22",
-    "by": "Kevin 2026-10-21 10:58 ET: apply backtest proposals 1,2,6,7 LIVE from Thu 2026-10-22; paper-test 3-5 (report /workspace/silas-quant/backtests/2026-10-21-price-band-budget/report.md)",
-    "case": "INVE 2026-10-21 (Dutch-auction self-tender, pinned under $2.85)",
-    "rejectIf": "same-day (filed/announced today or since prior close) tender offer, Dutch auction, merger-arb / merger agreement",
-    "forms": [
-      "SC TO-I",
-      "SC TO-T",
-      "SC TO-C",
-      "SC 14D9",
-      "SC 14D-9",
-      "DEFM14A",
-      "PREM14A",
-      "8-K item 1.01 (merger agreement)"
-    ],
-    "newsKeywords": [
-      "tender offer",
-      "dutch auction",
-      "self-tender",
-      "to be acquired",
-      "definitive agreement to be acquired",
-      "merger agreement",
-      "agreed to be acquired",
-      "take-private",
-      "go-private"
-    ],
-    "helper": "python3 ${HELPERS_DIR}/discretion.py gate --symbol S --last L --day-pct P [--filings 'SC TO-I,8-K:1.01'] [--news 'headline text'] [--now ISO]",
-    "stateField": "eventFlags[S].eventVeto {veto:true, reason, form|keyword} (set by scan/refresh/entries/manage when found)"
-  },
-  "shadowOrb": {
-    "enabled": true,
-    "from": "2026-10-22",
-    "tag": "paper: proposals 3-5",
-    "by": "Kevin 2026-10-21 10:58 ET: apply backtest proposals 1,2,6,7 LIVE from Thu 2026-10-22; paper-test 3-5 (report /workspace/silas-quant/backtests/2026-10-21-price-band-budget/report.md)",
-    "neverPlaceOrders": true,
-    "helper": "python3 ${HELPERS_DIR}/shadow_orb.py tick --state <morning-session.json> --bars <1m bars raw> [--bars ...] --quotes <quotes raw> [--meta <meta.json>] [--now ISO]",
-    "dayFile": "${DESK_DATA}/shadow-orb-<D>.json",
-    "ledger": "${DESK_DATA}/shadow-orb-ledger.json",
-    "rules": {
-      "p3_priority": "tier1 $20-50 gappers, tier2 >= $2B market-cap names with catalystScore > 0, tier3 rest; within tier prefer 8-15% move then catalystScore",
-      "p4_entry": "9:35 <= now < 10:00: ask/last > opening-range (9:30-9:35) high AND > session VWAP; skip if day high was set before 9:35 and price is below it",
-      "p5_stop": "stop = the higher (tighter) of OR low / VWAP that is below entry, minus 1 tick; qty so (entry-stop)*qty <= 1% of startBank, capped at startBank/2 notional (fractional OK)",
-      "exits": "stop (first), TP +2% (fixed floor), flatten 11:00 at bid; simulated from 1-minute bars since last tick (same bar stop+TP counts as stop)",
-      "filtersShared": "same live proposals 1/2/6 (price >= $2, move 8-25%, event veto); max 2 concurrent shadow positions, 6 shadow RTs/day; no kill switch (logged)"
-    },
-    "reviewAfterTrades": 40,
-    "paperVariants": {
-      "from": "2026-10-22",
-      "variants": {
-        "lockCap2": "P5 structure stop capped at the locked -2% (a wider P5 stop can never go live)",
-        "stall_x1_n5": "after hw >= +1%, exit at 1m close when no new high for 5 min",
-        "stall_x05_n10": "after hw >= +0.5%, exit when no new high for 10 min"
-      },
-      "evidence2026-10-21": "replay on today's 1m bars, shadow ticks every 1/3/5 min: main +1.00/+0.25/-0.42 USD (n 6/5/4); stall_x1_n5 +1.40/+0.70/+0.01; lockCap2 +1.00/-0.19/-0.94. One day, correlated names: NOT adoption evidence.",
-      "summary": "python3 ${HELPERS_DIR}/shadow_orb.py summary -> variants{}",
-      "reviewAfterTrades": 40,
-      "stopWidth": {
-        "enabled": true,
-        "from": "2026-10-23",
-        "approvedBy": "Kevin 2026-10-22",
-        "approvedNote": "Kevin 2026-10-22 12:17 ET: keep the -2% stop live; paper-test a -3% stop and a +5% target alongside. PAPER ONLY.",
-        "neverPlaceOrders": true,
-        "liveUnchanged": "live SL -2.0% / TP (tpModel, floor +2%) / sizing are NOT changed by this test",
-        "variants": {
-          "stop2_tp2": "live baseline as a fixed bracket: -2% stop / +2% TP",
-          "stop3_tp2": "-3% stop / +2% TP",
-          "stop2_tp5": "-2% stop / +5% TP",
-          "stop3_tp5": "-3% stop / +5% TP"
-        },
-        "sources": {
-          "liveMirror": "every LIVE desk buy today (state roundTrips + positions by buyOrderId, entry < 11:00), replayed off the live fill on 1m bars",
-          "timing": "the same brackets on every paper timing-ledger entry (secondary tally; no kill switch / slots)"
-        },
-        "rules": "stop = fill x (1-s) rounded UP to the tick, TP = fill x (1+t) rounded up; same-bar stop+TP = stop; stall exit per config stallExit (20 min, hw < +1% -> exit at 1m close); 11:00 flatten at the close of the last bar before 11:00; D1 kill switch (2 consecutive variant stops / variant day P&L <= -5% of startBank) and max 2 positions / same-symbol-open evaluated inside each variant",
-        "slippage": {
-          "wholeShares": 0.0,
-          "fractionalStopPct": 0.45
-        },
-        "fractionalStopSlipPct": 0.45,
-        "metrics": "per variant: n, win %, total / expectancy pnl %, R = pnl% / stop distance % (equal dollar risk), rUsd1pct = R x 1% of startBank, MAE %, exit reasons, skips",
-        "differencesVsLive": [
-          "no dynamic TP / trailing stop (fixed brackets)",
-          "no D3 hold past 11:00 (always flatten 11:00)",
-          "no gap-guard escalation",
-          "kill switch counts realized variant exits only",
-          "a variant can never take an entry the live desk did not take"
-        ],
-        "reviewAfterTrades": 40,
-        "ledgerKey": "shadow-orb-ledger.json stopWidthTrades (forward rows only)",
-        "seedFile": "${DESK_DATA}/shadow-stopwidth-seed.json (historical replays, kept separate; never counted toward the 40)",
-        "evidence": "${DESK_ROOT}/staging/stop-width-2026-10-22/report.md",
-        "summary": "python3 ${HELPERS_DIR}/shadow_orb.py summary -> stopWidth{forwardLive, forwardTiming, seeded, line}"
-      }
-    }
-  },
-  "reconcile": {
-    "enabled": true,
-    "applyFrom": "2026-10-22",
-    "helper": "python3 ${HELPERS_DIR}/reconcile.py sync --state <state> --positions <raw> --orders <raw> [--orders <page2>] --quotes <held quotes raw> --routine <name> --apply",
-    "gapRecheckSeconds": 10,
-    "maxQuoteAgeSeconds": 60,
-    "maxSnapshotAgeSeconds": 90,
-    "why": "2026-10-21 review: SMCI buy lost from positions[] by overlapping twin writes (adopted twice), INVE/SMCI/AHT stop fills seen one tick late (symbol-based reconcile from minutes-old snapshots); broker lists stop-limits as type limit + trigger stop",
-    "gapGuard": "escalate (cancel -> verify -> sell bid x0.97, retry x0.94) when bid < stop-limit's limit, or bid <= stop still unfilled on a 2nd look >=10 s later, or unprotected and bid <= stop. Speeds the exit the locked -2% stop already requires; never lowers a stop.",
-    "tests": "${DESK_ROOT}/staging/discretion/tests/test_reconcile.py",
-    "addedBy": "desk review 2026-10-21 (executor; Kevin: 'You have the wheel')",
-    "safetyClass": "tightening/safety (no locked rule changed)",
-    "stateLagSeconds": 360,
-    "orderActionLock": {
-      "from": "2026-10-22",
-      "helper": "python3 ${HELPERS_DIR}/reconcile.py lock|unlock --state <state> --symbol S --routine <name> [--wait 60] [--ttl 120]",
-      "why": "2026-10-21 manage-a/manage-b raced stop<->TP swaps (12:40 BB, 13:21 WULF) and flatten-backup raced manage-b at 15:45 (403 cannot be cancelled / not enough shares)",
-      "tests": "${DESK_ROOT}/staging/discretion/tests/test_orderlock.py"
-    }
-  },
-  "fractionalWatch": {
-    "enabled": true,
-    "intervalSeconds": 60,
-    "windowSeconds": 270,
-    "retryBrokerStop": false,
-    "approvedBy": "Kevin 2026-10-22",
-    "approvedText": "Allow fractional buys but check their stop every minute.",
-    "effective": "2026-10-23",
-    "why": "Robinhood rejects stop and stop-limit orders on fractional share quantities ('Invalid trigger for fractional order', 3 rejects on LMT 2026-10-22). LMT was desk-watched only every ~5 min and closed -2.54% vs the -2% stop (-0.55% past the virtual stop). Routines cannot fire more often than every 5 min, so the watch runs inside the manage tick.",
-    "mechanism": "manage tick (STEP 4b) and entries post-fill watch: after the rest of the run, one get_equity_quotes about every intervalSeconds until windowSeconds after the run started or the position closes; each read -> reconcile.py fracwatch (decide + log under state.fractionalWatch); bid <= active stop or bid >= targetTP -> reconcile.py lock -> re-read position -> market-sell full qty -> reason -> verify -> unlock -> sync --apply. Release the lock between reads; lock busy (exit 3) -> skip that read. 15:45 hard flatten and kill switch still apply.",
-    "maxFractionalPositions": 1,
-    "buyAllowedOnlyIf": "fractionalWatch.enabled and manage-a/manage-b armed and the buying run can watch the fill",
-    "helper": "python3 ${HELPERS_DIR}/reconcile.py fracwatch --state <state> --symbol S --routine <name> --quotes <raw quotes> --tick-start <ISO>",
-    "stateKey": "morning-session.json fractionalWatch {reads[], last{}, config}",
-    "tests": "${DESK_ROOT}/staging/discretion/tests/test_fracwatch.py",
-    "supersedes": "fractionalLane.protection.policy brokerStopFirst (Kevin 2026-10-09 11:44 ET) and the 5-min manage tick as the fractional stop check",
-    "ownerLocked": true
-  },
-  "executionMode": "live",
-  "liveMode": {
-    "armed": true,
-    "note": "ARMED by the owner for the live account. Kill switch: armed=false or desk.paused=true.",
-    "armedBy": "Kevin 2026-10-25 19:25 ET (chat)",
-    "autoSwitchAtOpen": {
-      "enabled": true,
-      "atEt": "09:30",
-      "confirmation": "none",
-      "promptKevin": false,
-      "authorizedBy": "Kevin 2026-11-10 16:09 ET (chat): \"Arm live at 9:30 am without live confirmation.\" (standing, every trading day)",
-      "rule": "07:30\u201309:29 premarket PAPER session; at 09:30 the desk trades LIVE cash automatically with no confirmation step, no waiting and no prompt. Exception: Kevin's explicit pause (desk.paused true) or disarm (liveMode.armed false) keeps it off. This switch is not an arm/disarm: armed stays as Kevin set it."
-    }
-  },
-  "paperMode": {
-    "startDate": "2026-10-26",
-    "startCashUsd": 100.0,
-    "stateDir": "${DESK_DATA}/paper-mode",
-    "brokerFile": "${DESK_DATA}/paper-mode/broker.json",
-    "ledgerFile": "${DESK_DATA}/paper-mode/desk-phases.json",
-    "proceduresDir": "${DESK_ROOT}/live/paper",
-    "scorecardDir": "${DESK_ROOT}/paper-mode",
-    "liveStatePathsProtected": [
-      "${DESK_DATA}/morning-session.json",
-      "${DESK_DATA}/week-desk.json",
-      "${DESK_DATA}/order-locks.json",
-      "${DESK_DATA}/shadow-orb-ledger.json"
-    ],
-    "liveStateDir": "${DESK_DATA}",
-    "reviseAppliesToConfig": false,
-    "maxQuoteAgeSeconds": 120,
-    "marketSlippagePct": 0.05,
-    "fillModel": "paper_broker.py docstring: quote-point fills at bid/ask; 1-minute-bar fills for resting orders (limit at min/max(limit, open); stop triggers at low<=stop, fills at min(stop, open), stop-limit rests if gapped through its limit); market +/-0.05% slippage",
-    "liveOrderTripwire": "python3 ${HELPERS_DIR}/paper_guard.py audit --orders <read-only live get_equity_orders raw> --since <paperMode.startedAt>: any live order created since paper mode started = ALERT Kevin",
-    "startedAt": "2026-10-23T12:00:00-04:00"
-  },
-  "desk": {
-    "singleRoutine": true,
-    "dispatcher": "${DESK_ROOT}/live/desk.md",
-    "clock": "python3 ${HELPERS_DIR}/desk_clock.py next",
-    "cron": "CRON_TZ=America/New_York */5 5-18 * * 1-5",
-    "paused": false,
-    "staleRunningMinutes": 12,
-    "maxAttempts": 3,
-    "manageClaimSeconds": 240,
-    "flattenAtEt": "15:50",
-    "kbRefreshEt": "18:00",
-    "holidays": [],
-    "earlyClose": {},
-    "setAt": "2026-10-23",
-    "replacesRoutines": 11,
-    "hardFlattenMinutesBeforeClose": 5,
-    "reportEarliestEt": "16:00",
-    "reportFallbackMinutesAfterClose": 5,
-    "phaseTimeoutMinutes": {
-      "scan": 15,
-      "refresh": 10,
-      "entries": 10,
-      "flatten": 10,
-      "hard-flatten": 10,
-      "report": 8,
-      "kb-refresh": 20,
-      "paper-summary": 8,
-      "default": 12
-    },
-    "liveBookMaxAgeSeconds": 600,
-    "phaseAutoExpiryNote": "desk_clock next auto-expires a running claim older than its timeout (marks failed 'auto-expired', counts as an attempt) so a crashed worker never leaves a phase stuck. Kevin 2026-11-10 16:02 ET: \"Fix mistakes and restart tomorrow\"",
-    "researchEt": "07:00"
-  },
-  "premarketPaper": {
-    "enabled": true,
-    "locked": true,
-    "approvedBy": "Kevin 2026-11-10 16:03 \"Run paper on premarket to test\" + 16:05 \"Repeat paper market test as part of rule set. 7:30 paper start. Test market until open. Switch to live cash at opening bell.\" + 16:09 \"Arm live at 9:30 am without live confirmation.\"",
-    "everyTradingDay": true,
-    "startEt": "07:30",
-    "noNewBuysAfterEt": "09:15",
-    "summaryAtEt": "09:20",
-    "liveSwitchEt": "09:30",
-    "stateDir": "${DESK_DATA}/premarket-paper",
-    "startCashUsd": "= live startCash of the day (paper copy; never live money)",
-    "liquidity": {
-      "shares": 5000,
-      "dollars": 25000,
-      "note": "premarket tape is thin; paper only"
-    },
-    "isolation": "separate paper state/broker/ledger rows under stateDir/<D>; DESK_PAPER_SESSION=1 makes reconcile.py refuse any write outside stateDir; paper P&L/kill switch/RT count/recap never mix with live",
-    "summary": {
-      "format": "PAPER \u2014 <Day Mon D> pre-open: checks <p>/<n> pass [FAILED: ...] | paper W/L a/b | paper $start \u2192 $end",
-      "failedCheckIsEscalation": true
-    },
-    "helper": "${HELPERS_DIR}/premarket_paper.py"
-  },
-  "selfLearning": {
-    "enabled": true,
-    "helper": "python3 ${HELPERS_DIR}/learn.py run --apply",
-    "runIn": "kb-refresh (\u226518:00) after the live day and the 07:30 paper session are in",
-    "authorizedBy": "Kevin 2026-11-10 16:07 ET: \"Use results for your logic set. Adjust and improve accordingly... Remove all rule sets that hinder reaching goal...\"",
-    "maxChangesPerDay": 3,
-    "minTrades": 8,
-    "lookbackTrades": 40,
-    "bounds": {
-      "tpModel.floorPct": {
-        "min": 2.0,
-        "max": 6.0,
-        "step": 1.0
-      },
-      "stallExit.afterMinutes": {
-        "min": 8,
-        "max": 25,
-        "step": 2
-      },
-      "entryFilters.ta.after1000Required": {
-        "min": 4,
-        "max": 5,
-        "step": 1
-      },
-      "entryFilters.minLastPriceAtEntry": {
-        "min": 0.5,
-        "max": 3.0,
-        "step": 0.5
-      },
-      "liquidityBandShares": {
-        "min": 25000,
-        "max": 200000,
-        "step": 25000
-      },
-      "discretion.killSwitch.dayPnlPctOfStartBank": {
-        "min": -7.0,
-        "max": -3.0,
-        "step": 1.0
-      },
-      "recoveryModel.thresholdPct": {
-        "min": 26,
-        "max": 70,
-        "step": 5
-      }
-    },
-    "hardFloors": [
-      "broker-truth reconcile",
-      "flatten before close (15:50/15:55)",
-      "cash equity longs only: no margin/options/shorts/crypto",
-      "Kevin-only arm/disarm/pause",
-      "some daily loss limit always on",
-      "per-trade max loss 5% from entry (maxTradeLoss; stop never wider than \u22125%; trade-cap backstop)",
-      "bank drawdown system stop at \u226450% of baseline (bankStop)",
-      "resting stop_limit hard stop on every whole-share position: trigger \u22124.5% / limit \u22125% (stopargs --entry + verify-protection)",
-      "\u22122% recovery decision point fixed (Kevin only)"
-    ],
-    "log": "config.selfLearningLog[] + improvementsApplied[]",
-    "lockedParams": [
-      "bankStop",
-      "desk.paused",
-      "liveMode",
-      "maxTradeLoss",
-      "premarketPaper",
-      "recoveryModel.decisionPointPct",
-      "recoveryModel.hardStop",
-      "tpModel.stopPct"
-    ]
-  },
-  "dayTraderKb": {
-    "by": "Kevin 2026-11-10 16:13 ET: \"Scrape daily reports and market news to see emerging potential patterns and trades. You're operating as a day trader now. Adjust knowledge base accordingly.\"",
-    "kb": "${DESK_ROOT}/kb/day-trader-kb.md",
-    "patterns": "${DESK_ROOT}/kb/patterns.json",
-    "watchlist": "${DESK_ROOT}/kb/watchlist-<D>.json",
-    "helper": "python3 ${HELPERS_DIR}/desk_learn.py patterns|watchlist|learn",
-    "phases": [
-      "research 07:00 (research.md)",
-      "kb-refresh 18:00 step 6b"
-    ],
-    "setups": [
-      "gap_and_go",
-      "orb_breakout",
-      "vwap_reclaim",
-      "momentum_pullback",
-      "recycle_bounce",
-      "midday_momentum"
-    ],
-    "watchlistUse": "priority input to discovery ranking; never bypasses a gate"
-  },
-  "maxTradeLoss": {
-    "enabled": true,
-    "locked": true,
-    "hardFloor": true,
-    "maxLossPctFromEntry": 5.0,
-    "authorizedBy": "Kevin 2026-11-10 16:25 ET: \"Add 5% loss rule on individual trades.\"",
-    "rule": "No position may lose more than 5% from entry. The resting protective stop_limit is the HARD STOP (trigger entry\u00d70.955, limit entry\u00d70.95; Kevin 16:28 supersedes the \u22122% resting stop); \u22122% is the recovery decision point (recovery.py); no stop/limit may ever be set below entry\u00d70.95 (reconcile.py stopargs --entry <avg> refuses it). BACKSTOP every fire: risk_floors.py trade-cap \u2192 any position with bid \u2264 entry\u00d70.95 (gap through the stop / stop-limit unfilled) \u2192 cancel its sells \u2192 verify \u2192 market sell at once.",
-    "helper": "python3 ${HELPERS_DIR}/risk_floors.py trade-cap --positions <pos> --quotes <quotes> --orders <orders>  (exit 8 = exit now)",
-    "neverChangedBy": [
-      "desk_learn.py",
-      "daily revise",
-      "any routine"
-    ]
-  },
-  "bankStop": {
-    "enabled": true,
-    "locked": true,
-    "hardFloor": true,
-    "thresholdPct": 50.0,
-    "baselineUsd": 100.0,
-    "baselineDate": "YYYY-MM-DD",
-    "baselineNote": "ILLUSTRATIVE. Set baselineUsd to live-account equity at the measurement start. Owner deposits raise the baseline; withdrawals lower it (record with risk_floors.py flow). Stop line = baselineUsd * (1 - thresholdPct/100). Example: baseline 100.00 \u2192 stop 50.00. A bad or zero portfolio read never trips.",
-    "equity": "get_portfolio(account_number=${BROKER_ACCOUNT_NUMBER}).total_value (cash + positions); fallback cash + equity_value. A bad/zero read never trips.",
-    "stateFile": "${DESK_DATA}/bank-stop.json",
-    "cashFlows": [],
-    "authorizedBy": "Kevin 2026-11-10 16:24 ET: \"Only stop automatic mode when total bank losses 50%.\"",
-    "onTrip": "flatten every position safely (cancel its stop \u2192 verify \u2192 market sell), cancel ALL open orders, write bank-flat-done; automatic mode OFF: no premarket paper, no 09:30 paper\u2192live switch, no new trades, every desk_clock fire idles 'bank_stop_tripped' until Kevin explicitly restarts (risk_floors.py bank-restart --by \"Kevin <words, time>\"). Escalation handed to the parent immediately.",
-    "onlySystemStops": [
-      "this bank stop (equity \u2264 50% of baseline)",
-      "Kevin's explicit command (desk.paused true / liveMode.armed false)"
-    ],
-    "notASystemStop": "daily kill switch (2 consecutive loss stops or \u22125% day) = day-only new-buy pause; resets next day",
-    "helper": "python3 ${HELPERS_DIR}/risk_floors.py bank-check --portfolio <get_portfolio raw> --apply  (exit 9 = SYSTEM STOP)",
-    "neverChangedBy": [
-      "desk_learn.py",
-      "daily revise",
-      "any routine"
-    ],
-    "restart": "Kevin only"
-  },
-  "recoveryModel": {
-    "enabled": true,
-    "helper": "python3 ${HELPERS_DIR}/recovery.py score --symbol S --entry E --price BID --bars5 <5m> [--bars1 <1m>] --spy5 <SPY 5m> [--sector5 <ETF 5m>] --catalyst intact|unknown|broken --log  (exit 10 = EXIT NOW)",
-    "authorizedBy": [
-      "Kevin 2026-11-10 16:28 ET: \"Auto review charts and sell at 2% if likelihood of recovery is less than 50%. Otherwise allow to go to a 5% loss then stop automatically.\"",
-      "Kevin 2026-11-10 16:30 ET: \"Test that percentage and adjust if needed. Greater or lower based on the bounce after -5% outs. If chart ends up recovering eventually make corrections to logic.\" (desk_learn may move thresholdPct within 30\u201370, logged)"
-    ],
-    "decisionPointPct": -3.45,
-    "decisionPointLocked": "Kevin only",
-    "hardStop": {
-      "triggerPct": -4.5,
-      "limitPct": -5.0,
-      "locked": "Kevin only",
-      "note": "resting stop_limit on every whole-share position: stop entry\u00d70.955, limit entry\u00d70.95 (fill never worse than \u22125%); risk_floors.py trade-cap market-sells anything \u2264 \u22125% (gap / unfilled)"
-    },
-    "thresholdPct": 38,
-    "thresholdBounds": {
-      "min": 26,
-      "max": 70,
-      "step": 5
-    },
-    "weights": {
-      "vwap": 0.2,
-      "trend1m": 0.1,
-      "trend5m": 0.15,
-      "dipVolume": 0.15,
-      "support": 0.15,
-      "rsi": 0.05,
-      "market": 0.1,
-      "catalyst": 0.1
-    },
-    "weightBounds": {
-      "min": 0.02,
-      "max": 0.35,
-      "step": 0.02
-    },
-    "minLabeled": 6,
-    "journal": "${DESK_DATA}/recovery-decisions.jsonl",
-    "postExitTracking": "after every loss exit (score sell + hard stop), stall exit, profit exit and every hold decision: recovery.py post-exit with the rest-of-session 5m bars (report.md, then next-day open at the 05:30 scan if useful) \u2192 label correct|wrong \u2192 desk_learn recovery_tune",
-    "backtest2026-11-10": {
-      "note": "Historical recovery-threshold grid omitted from this example. See reference/manage-and-recovery.md.",
-      "trades": 60,
-      "chosenOriginal": 55
-    },
-    "earlyThreshold": {
-      "enabled": true,
-      "beforeEt": "10:00",
-      "offset": -12,
-      "effective": "26 before 10:00 (38 \u2212 12), 38 from 10:00 (higher-risk+15 profile 2026-11-17)",
-      "evidence": "recovery-backtest-2026-11-10: \u22122% touches before 10:00 n20: T40 \u221228.3% / T55 \u221234.0% / always-sell \u221240%; from 10:00 n25: T55 \u221245.0% vs T40 \u221259.0%",
-      "decidedBy": "SILAS (final decision authority, Kevin 2026-11-10 16:49 ET)"
-    }
-  },
-  "decisionObjective": {
-    "primeDirective": "+5 percentage points decision success rate over baseline (Kevin 2026-11-10 16:31 ET: \"Our prime directive is +5% success rate on our decision-making. Improve and refine.\")",
-    "baselinePct": 25.8,
-    "goalPct": 30.8,
-    "baselineFrom": "all 60 live round trips 2026-10-05..2026-11-10 = 120 decisions (60 entries + 60 exits), exits labeled by rest-of-session 5m bars (kb/backtest-bars)",
-    "baselineByType": {
-      "entry": "17/60 28.3%",
-      "loss_exit": "8/39 20.5%",
-      "profit_exit": "4/17 23.5%",
-      "stall_exit": "2/4 50.0%",
-      "hold": "none yet (backtest proxy: hold beat \u22122% sell 26/45)",
-      "blocked": "no outcome data (wouldHit null) \u2014 excluded"
-    },
-    "definitions": {
-      "entry": "correct if the round trip closed with pnlUsd > 0",
-      "loss_exit": "(\u22122% score sell, \u22125% hard stop, any losing exit) correct if price did NOT get back to entry for the rest of the session",
-      "hold": "(hold at the \u22122% score check) correct if price got back above \u22122% before touching the \u22124.5% hard-stop trigger",
-      "stall_exit": "correct if price did not rise \u2265 2% above max(entry, exit) for the rest of the session",
-      "profit_exit": "(take-profit / trailing lock / profit exit) correct if price did not rise \u2265 2% above the exit price for the rest of the session",
-      "blocked": "correct if the blocked name would NOT have reached +2% before \u22122% (only when outcome data exists)"
-    },
-    "helper": "python3 ${HELPERS_DIR}/desk_learn.py decision-rate --date <D>  (line for the recap)",
-    "optimizer": "desk_learn.py learn --apply (bounded, logged) reports rolling rate vs goal; recovery_tune moves thresholdPct/weights from labeled outcomes"
-  },
-  "decisionAuthority": {
-    "holder": "the desk agent (SILAS)",
-    "since": "2026-11-10T16:49:00-05:00",
-    "until": "the owner specifically cancels it",
-    "kevinQuote": "You're suggestions are understood. Adjust playback to accommodate the suggestions. Continue using your logic. Consider my requests simply suggestions. You have the final decision authority until canceled specially.",
-    "meaning": "Kevin's trading requests are suggestions; the desk decides (evidence first, logged with 'decided by SILAS'), may adjust or override earlier settings, and never waits on Kevin.",
-    "hardFloorsUnchanged": [
-      "protective stop_limit on every whole-share position (hard stop \u22124.5% trigger / \u22125% limit)",
-      "5% per-trade max loss (trade-cap backstop)",
-      "50% bank drawdown system stop (Kevin restart only)",
-      "broker-truth reconcile",
-      "flatten before close (15:50 / 15:55)",
-      "cash equity longs only: no margin, options, shorts, crypto",
-      "Kevin-only pause / disarm / arm"
-    ],
-    "notDelegated": "arming/disarming/pausing live mode, restarting after the bank stop, moving the recovery decision point (currently \u22123.45%) or the hard stop"
-  },
-  "entryPlaybook": {
-    "enabled": true,
-    "effectiveFrom": "2026-11-11",
-    "decidedBy": "SILAS (final decision authority, Kevin 2026-11-10 16:49 ET); entries, not exits, decide profitability",
-    "liveSetups": [
-      "gap_and_go",
-      "early_momentum"
-    ],
-    "paperOnlySetups": [
-      "recycle_bounce",
-      "orb_breakout",
-      "midday_momentum",
-      "vwap_reclaim",
-      "momentum_pullback"
-    ],
-    "liveWindowEt": {
-      "from": "09:35",
-      "to": "10:00"
-    },
-    "aPlus": {
-      "enabled": true,
-      "minWatchlistScore": 0.51,
-      "requireTaPass": 3,
-      "maxPerDay": 3,
-      "untilEt": "13:30",
-      "note": "higher-risk+15 2026-11-17: after 10:00 up to 3 watchlist-catalyst entries (score \u2265 0.51), TA \u2265 3/5, until 13:30 ET, never a re-entry; tag playbookTag aPlus"
-    },
-    "watchlistDir": "${DESK_ROOT}/kb",
-    "watchlistPriority": "discovery scores watchlist names first; A+ path requires it after 10:00",
-    "promote": {
-      "minTrades": 10,
-      "minWinPct": 40,
-      "minAvgPct": 0.5,
-      "source": "07:30 premarket paper session roundTrips tagged `setup`"
-    },
-    "demote": {
-      "lookback": 15,
-      "minTrades": 10,
-      "maxWinPct": 30
-    },
-    "evidence": {
-      "gap_and_go (first entry 09:30\u201309:45)": "n20 win 40% avg +1.33% +$0.81",
-      "early_momentum (first entry 09:45\u201310:00)": "n11 win 36% avg +0.16% +$2.15",
-      "entries 10:00\u201310:30": "n11 win 9% avg \u22122.12% \u2212$2.05",
-      "entries \u226510:30": "n17 win 18% avg \u22120.65% \u2212$2.95",
-      "recycle_bounce (re-entries)": "n31 win 23% avg \u22120.73% \u2212$2.14",
-      "orb_breakout": "n5 win 20% avg \u22121.45%",
-      "midday_momentum": "n4 win 25% avg +0.03%"
-    },
-    "expectedEffect": "live entry decisions drawn from the 09:30\u201310:00 first-entry pool (n32 win ~41% vs 28.3% all) \u2192 entry success \u2248 +12 pp; fewer trades (\u2264 6 RT/day)"
-  },
-  "paperShadow": {
-    "enabled": true,
-    "locked": false,
-    "decidedBy": "SILAS 2026-11-10 16:55 ET (final decision authority, Kevin 16:49 / 16:5x 'You are in control.')",
-    "window": "09:30\u201315:45 ET on every live manage/entries fire, AFTER all live work",
-    "endEt": "15:45",
-    "noNewBuysAfterEt": "15:30",
-    "maxPositions": 2,
-    "startCashUsd": 100.0,
-    "stateDir": "${DESK_DATA}/intraday-shadow",
-    "helper": "python3 ${HELPERS_DIR}/paper_shadow.py tick --date <D> --quotes <this fire's quotes> --bars5 <this fire's 5m bars> --candidates <playbook-refused candidates> --budget-s 20",
-    "skipIfFireElapsedS": 150,
-    "budgetS": 20,
-    "trades": "paper-only setups: re-entries incl. winner recycle, orb_breakout, midday_momentum, vwap_reclaim, momentum_pullback, post-10:00 non-A+ candidates (live gate refusals whose ONLY blocking reasons start with 'playbook_')",
-    "exitLogic": "same as live: hard stop \u22124.5%/\u22125%, \u22122% recovery score (threshold by time), stall exit, TP floor, +2% trailing lock, shadow flatten 15:45",
-    "isolation": "no broker calls; writes only under stateDir; never touches live state, P&L, kill switch, round-trip cap, bank stop; separate journal shadow-decisions.jsonl",
-    "evidence": "roundTrips (source paper_shadow, setup-tagged) feed desk_learn setup_promotion; post-close `paper_shadow.py label` \u2192 paper decision-success (`desk_learn.py decision-rate --paper`)"
-  },
-  "riskProfile": {
-    "name": "higher-risk+15",
-    "active": true,
-    "appliedAt": "2026-11-17T09:29:19-05:00",
-    "effectiveFrom": "2026-11-17",
-    "appliedBy": "Kevin 09:27 ET request \"Widen your risk tolerance by 15% confirm\" (applied by SILAS under final decision authority)",
-    "priorProfile": "higher-risk",
-    "priorAppliedAt": "2026-11-13T09:28:44-05:00",
-    "new": {
-      "softStopDecisionPointPct": -3.45,
-      "recoveryThreshold": {
-        "before1000": 26,
-        "from1000": 38
-      },
-      "taRequiredPassCount": "3/5 all day (unchanged)",
-      "after1000Entries": {
-        "maxPerDay": 3,
-        "untilEt": "13:30",
-        "minWatchlistScore": 0.51,
-        "requireTaPass": 3
-      },
-      "maxRoundTrips": 9,
-      "stallExitMinutes": 14,
-      "tpFloorPct": 5.0
-    },
+    "maxPctChangeAtEntry": 60.0,
+    "maxPctChangeAtRecycle": 40.0,
+    "minLastPriceAtEntry": 0.1,
+    "chaseHardVeto": true,
+    "scan.prefilterGapPctMin": 5.0,
+    "scan.prefilterGapPctMax": 60.0
+   },
+   "now": {
+    "minPctChangeAtEntry": -100.0,
+    "maxPctChangeAtEntry": 10000.0,
+    "maxPctChangeAtRecycle": 10000.0,
+    "minLastPriceAtEntry": 0.01,
+    "scan.prefilterGapPctMin": -100.0,
+    "scan.prefilterGapPctMax": 10000.0,
+    "chaseHardVeto": "entryFilters.ta.chaseHardVeto.enabled=false"
+   },
+   "note": "day-move band and chase veto removed (standing); shortlist is advisory only; any US common stock/ETF eligible. LOCKED: no dailyRevise may re-tighten these without Kevin.",
+   "supersededBy2026-10-22": {
     "previous": {
-      "stopLossPct": -3.0,
-      "recoveryModel.decisionPointPct": -3.0,
-      "recoveryModel.thresholdPct": 45,
-      "recoveryModel.earlyThreshold.effective": "30 before 10:00 (45 \u2212 15), 45 from 10:00",
-      "recoveryModel.earlyThreshold.offset": -15,
-      "recoveryModel.thresholdBounds.min": 30,
-      "fractionalLane.stopLossPct": -3.0,
-      "entryFilters.ta.requiredPassCount": 3,
-      "entryFilters.ta.requiredPassCountByTime": [
-        {
-          "fromEt": "09:30",
-          "toEt": "16:00",
-          "requiredPassCount": 3,
-          "tag": "after1000-5of5",
-          "note": "higher-risk 2026-11-13: 3/5 all day (tag kept so desk_learn tunes this entry, step \u00b11 within 3..5)"
-        }
-      ],
-      "entryFilters.ta.lateWindowRule.requiredPassCount": 3,
-      "entryFilters.ta.scoring.mustPassAtLeastNOf5TaChecks": 3,
-      "entryFilters.ta.scoring.mustPassAtLeastNOf5TaChecksFrom1030": 3,
-      "entryPlaybook.aPlus": {
-        "enabled": true,
-        "minWatchlistScore": 0.6,
-        "requireTaPass": 3,
-        "maxPerDay": 3,
-        "untilEt": "13:00",
-        "note": "higher-risk 2026-11-13: after 10:00 up to 3 watchlist-catalyst entries (score \u2265 0.6), TA \u2265 3/5, until 13:00 ET, never a re-entry; tag playbookTag aPlus"
-      },
-      "maxRoundTrips": 8,
-      "discretion.allDaySession.rtCap": 8,
-      "fractionalLane.roundTripCapShared": 8,
-      "stallExit.afterMinutes": 12,
-      "tpModel.floorPct": 5.0,
-      "entryFilters.ta.strictMinPassCount": 3,
-      "selfLearning.bounds.recoveryModel.thresholdPct.min": 30
+     "minLastPriceAtEntry": 0.01,
+     "minPctChangeAtEntry": -100.0,
+     "maxPctChangeAtEntry": 10000.0,
+     "maxPctChangeAtRecycle": 10000.0
+    }
+   }
+  },
+  "moveBandNormalDays": {
+   "from": "2026-10-22",
+   "minPctChangeAtEntry": 8.0,
+   "maxPctChangeAtEntry": 25.0,
+   "prefer": "8-15%",
+   "replaces": "-100..10000 written 2026-10-21 10:12",
+   "by": "Kevin 2026-10-21 10:58 ET: apply backtest proposals 1,2,6,7 LIVE from Thu 2026-10-22; paper-test 3-5 (report /workspace/silas-quant/backtests/2026-10-21-price-band-budget/report.md)"
+  },
+  "minLastPrice": {
+   "from": "2026-10-22",
+   "usd": 2.0,
+   "by": "Kevin 2026-10-21 10:58 ET: apply backtest proposals 1,2,6,7 LIVE from Thu 2026-10-22; paper-test 3-5 (report /workspace/silas-quant/backtests/2026-10-21-price-band-budget/report.md)"
+  }
+ },
+ "eventVeto": {
+  "enabled": true,
+  "from": "2026-10-22",
+  "by": "Kevin 2026-10-21 10:58 ET: apply backtest proposals 1,2,6,7 LIVE from Thu 2026-10-22; paper-test 3-5 (report /workspace/silas-quant/backtests/2026-10-21-price-band-budget/report.md)",
+  "case": "INVE 2026-10-21 (Dutch-auction self-tender, pinned under $2.85)",
+  "rejectIf": "same-day (filed/announced today or since prior close) tender offer, Dutch auction, merger-arb / merger agreement",
+  "forms": [
+   "SC TO-I",
+   "SC TO-T",
+   "SC TO-C",
+   "SC 14D9",
+   "SC 14D-9",
+   "DEFM14A",
+   "PREM14A",
+   "8-K item 1.01 (merger agreement)"
+  ],
+  "newsKeywords": [
+   "tender offer",
+   "dutch auction",
+   "self-tender",
+   "to be acquired",
+   "definitive agreement to be acquired",
+   "merger agreement",
+   "agreed to be acquired",
+   "take-private",
+   "go-private"
+  ],
+  "helper": "python3 ${HELPERS_DIR}/discretion.py gate --symbol S --last L --day-pct P [--filings 'SC TO-I,8-K:1.01'] [--news 'headline text'] [--now ISO]",
+  "stateField": "eventFlags[S].eventVeto {veto:true, reason, form|keyword} (set by scan/refresh/entries/manage when found)"
+ },
+ "shadowOrb": {
+  "enabled": true,
+  "from": "2026-10-22",
+  "tag": "paper: proposals 3-5",
+  "by": "Kevin 2026-10-21 10:58 ET: apply backtest proposals 1,2,6,7 LIVE from Thu 2026-10-22; paper-test 3-5 (report /workspace/silas-quant/backtests/2026-10-21-price-band-budget/report.md)",
+  "neverPlaceOrders": true,
+  "helper": "python3 ${HELPERS_DIR}/shadow_orb.py tick --state <morning-session.json> --bars <1m bars raw> [--bars ...] --quotes <quotes raw> [--meta <meta.json>] [--now ISO]",
+  "dayFile": "${DESK_DATA}/shadow-orb-<D>.json",
+  "ledger": "${DESK_DATA}/shadow-orb-ledger.json",
+  "rules": {
+   "p3_priority": "tier1 $20-50 gappers, tier2 >= $2B market-cap names with catalystScore > 0, tier3 rest; within tier prefer 8-15% move then catalystScore",
+   "p4_entry": "9:35 <= now < 10:00: ask/last > opening-range (9:30-9:35) high AND > session VWAP; skip if day high was set before 9:35 and price is below it",
+   "p5_stop": "stop = the higher (tighter) of OR low / VWAP that is below entry, minus 1 tick; qty so (entry-stop)*qty <= 1% of startBank, capped at startBank/2 notional (fractional OK)",
+   "exits": "stop (first), TP +2% (fixed floor), flatten 11:00 at bid; simulated from 1-minute bars since last tick (same bar stop+TP counts as stop)",
+   "filtersShared": "same live proposals 1/2/6 (price >= $2, move 8-25%, event veto); max 2 concurrent shadow positions, 6 shadow RTs/day; no kill switch (logged)"
+  },
+  "reviewAfterTrades": 40,
+  "paperVariants": {
+   "from": "2026-10-22",
+   "variants": {
+    "lockCap2": "P5 structure stop capped at the locked -2% (a wider P5 stop can never go live)",
+    "stall_x1_n5": "after hw >= +1%, exit at 1m close when no new high for 5 min",
+    "stall_x05_n10": "after hw >= +0.5%, exit when no new high for 10 min"
+   },
+   "evidence2026-10-21": "replay on today's 1m bars, shadow ticks every 1/3/5 min: main +1.00/+0.25/-0.42 USD (n 6/5/4); stall_x1_n5 +1.40/+0.70/+0.01; lockCap2 +1.00/-0.19/-0.94. One day, correlated names: NOT adoption evidence.",
+   "summary": "python3 ${HELPERS_DIR}/shadow_orb.py summary -> variants{}",
+   "reviewAfterTrades": 40,
+   "stopWidth": {
+    "enabled": true,
+    "from": "2026-10-23",
+    "approvedBy": "Kevin 2026-10-22",
+    "approvedNote": "Kevin 2026-10-22 12:17 ET: keep the -2% stop live; paper-test a -3% stop and a +5% target alongside. PAPER ONLY.",
+    "neverPlaceOrders": true,
+    "liveUnchanged": "live SL -2.0% / TP (tpModel, floor +2%) / sizing are NOT changed by this test",
+    "variants": {
+     "stop2_tp2": "live baseline as a fixed bracket: -2% stop / +2% TP",
+     "stop3_tp2": "-3% stop / +2% TP",
+     "stop2_tp5": "-2% stop / +5% TP",
+     "stop3_tp5": "-3% stop / +5% TP"
     },
-    "unchanged": [
-      "hard stop trigger entry\u00d70.955 / limit entry\u00d70.95",
-      "\u22125% market-sell backstop",
-      "5% max loss per trade",
-      "bidToStop/spread/RVOL/liquidity/$1 floor/dilution/merger hard filters (bidToStopPct stays \u22122.0)",
-      "full-cash sizing, max 2 slots",
-      "no re-buy after a losing exit",
-      "50% bank stop (baseline = measurement-start equity + owner cash flows; stop line = 50% of baseline)",
-      "flatten before close",
-      "no margin/options/shorts/crypto",
-      "owner-only arm/disarm/pause",
-      "09:30 auto live switch",
-      "TA 3/5 all day",
-      "tpModel.floorPct stays 5.0 (desk_learn already tuned it from 6.0 on 2026-11-13)"
+    "sources": {
+     "liveMirror": "every LIVE desk buy today (state roundTrips + positions by buyOrderId, entry < 11:00), replayed off the live fill on 1m bars",
+     "timing": "the same brackets on every paper timing-ledger entry (secondary tally; no kill switch / slots)"
+    },
+    "rules": "stop = fill x (1-s) rounded UP to the tick, TP = fill x (1+t) rounded up; same-bar stop+TP = stop; stall exit per config stallExit (20 min, hw < +1% -> exit at 1m close); 11:00 flatten at the close of the last bar before 11:00; D1 kill switch (2 consecutive variant stops / variant day P&L <= -5% of startBank) and max 2 positions / same-symbol-open evaluated inside each variant",
+    "slippage": {
+     "wholeShares": 0.0,
+     "fractionalStopPct": 0.45
+    },
+    "fractionalStopSlipPct": 0.45,
+    "metrics": "per variant: n, win %, total / expectancy pnl %, R = pnl% / stop distance % (equal dollar risk), rUsd1pct = R x 1% of startBank, MAE %, exit reasons, skips",
+    "differencesVsLive": [
+     "no dynamic TP / trailing stop (fixed brackets)",
+     "no D3 hold past 11:00 (always flatten 11:00)",
+     "no gap-guard escalation",
+     "kill switch counts realized variant exits only",
+     "a variant can never take an entry the live desk did not take"
     ],
-    "measure": "desk_learn + recaps: compare decision success rate and P&L of trades on/after 2026-11-17 (riskProfile higher-risk+15) vs higher-risk (from 2026-11-13) and prior baseline 25.8%",
-    "learnPolicy": "desk_learn.py: the guarded params are not tuned until \u2265 6 live trades taken on/after 2026-11-17 under this profile (recovery_tune uses only outcomes dated \u2265 2026-11-17); after that it tunes FROM the new values (TA count \u00b11 within 3..5, stall \u00b12 min, threshold within bounds step 5). recoveryModel.decisionPointPct stays Kevin-locked at \u22123.45.",
-    "minTradesBeforeTune": 6,
-    "guardedParams": [
-      "stallExit.afterMinutes",
-      "entryFilters.ta.requiredPassCountByTime",
-      "recoveryModel.thresholdPct"
+    "reviewAfterTrades": 40,
+    "ledgerKey": "shadow-orb-ledger.json stopWidthTrades (forward rows only)",
+    "seedFile": "${DESK_DATA}/shadow-stopwidth-seed.json (historical replays, kept separate; never counted toward the 40)",
+    "evidence": "${DESK_ROOT}/staging/stop-width-2026-10-22/report.md",
+    "summary": "python3 ${HELPERS_DIR}/shadow_orb.py summary -> stopWidth{forwardLive, forwardTiming, seeded, line}"
+   }
+  }
+ },
+ "reconcile": {
+  "enabled": true,
+  "applyFrom": "2026-10-22",
+  "helper": "python3 ${HELPERS_DIR}/reconcile.py sync --state <state> --positions <raw> --orders <raw> [--orders <page2>] --quotes <held quotes raw> --routine <name> --apply",
+  "gapRecheckSeconds": 10,
+  "maxQuoteAgeSeconds": 60,
+  "maxSnapshotAgeSeconds": 90,
+  "why": "2026-10-21 review: SMCI buy lost from positions[] by overlapping twin writes (adopted twice), INVE/SMCI/AHT stop fills seen one tick late (symbol-based reconcile from minutes-old snapshots); broker lists stop-limits as type limit + trigger stop",
+  "gapGuard": "escalate (cancel -> verify -> sell bid x0.97, retry x0.94) when bid < stop-limit's limit, or bid <= stop still unfilled on a 2nd look >=10 s later, or unprotected and bid <= stop. Speeds the exit the locked -2% stop already requires; never lowers a stop.",
+  "tests": "${DESK_ROOT}/staging/discretion/tests/test_reconcile.py",
+  "addedBy": "desk review 2026-10-21 (executor; Kevin: 'You have the wheel')",
+  "safetyClass": "tightening/safety (no locked rule changed)",
+  "stateLagSeconds": 360,
+  "orderActionLock": {
+   "from": "2026-10-22",
+   "helper": "python3 ${HELPERS_DIR}/reconcile.py lock|unlock --state <state> --symbol S --routine <name> [--wait 60] [--ttl 120]",
+   "why": "2026-10-21 manage-a/manage-b raced stop<->TP swaps (12:40 BB, 13:21 WULF) and flatten-backup raced manage-b at 15:45 (403 cannot be cancelled / not enough shares)",
+   "tests": "${DESK_ROOT}/staging/discretion/tests/test_orderlock.py"
+  }
+ },
+ "fractionalWatch": {
+  "enabled": true,
+  "intervalSeconds": 60,
+  "windowSeconds": 270,
+  "retryBrokerStop": false,
+  "approvedBy": "Kevin 2026-10-22",
+  "approvedText": "Allow fractional buys but check their stop every minute.",
+  "effective": "2026-10-23",
+  "why": "Robinhood rejects stop and stop-limit orders on fractional share quantities ('Invalid trigger for fractional order', 3 rejects on LMT 2026-10-22). LMT was desk-watched only every ~5 min and closed -2.54% vs the -2% stop (-0.55% past the virtual stop). Routines cannot fire more often than every 5 min, so the watch runs inside the manage tick.",
+  "mechanism": "manage tick (STEP 4b) and entries post-fill watch: after the rest of the run, one get_equity_quotes about every intervalSeconds until windowSeconds after the run started or the position closes; each read -> reconcile.py fracwatch (decide + log under state.fractionalWatch); bid <= active stop or bid >= targetTP -> reconcile.py lock -> re-read position -> market-sell full qty -> reason -> verify -> unlock -> sync --apply. Release the lock between reads; lock busy (exit 3) -> skip that read. 15:45 hard flatten and kill switch still apply.",
+  "maxFractionalPositions": 1,
+  "buyAllowedOnlyIf": "fractionalWatch.enabled and manage-a/manage-b armed and the buying run can watch the fill",
+  "helper": "python3 ${HELPERS_DIR}/reconcile.py fracwatch --state <state> --symbol S --routine <name> --quotes <raw quotes> --tick-start <ISO>",
+  "stateKey": "morning-session.json fractionalWatch {reads[], last{}, config}",
+  "tests": "${DESK_ROOT}/staging/discretion/tests/test_fracwatch.py",
+  "supersedes": "fractionalLane.protection.policy brokerStopFirst (Kevin 2026-10-09 11:44 ET) and the 5-min manage tick as the fractional stop check",
+  "ownerLocked": true
+ },
+ "executionMode": "live",
+ "liveMode": {
+  "armed": true,
+  "note": "ARMED by the owner for the live account. Kill switch: armed=false or desk.paused=true.",
+  "armedBy": "Kevin 2026-10-25 19:25 ET (chat)",
+  "autoSwitchAtOpen": {
+   "enabled": true,
+   "atEt": "09:30",
+   "confirmation": "none",
+   "promptKevin": false,
+   "authorizedBy": "Kevin 2026-11-10 16:09 ET (chat): \"Arm live at 9:30 am without live confirmation.\" (standing, every trading day)",
+   "rule": "07:30\u201309:29 premarket PAPER session; at 09:30 the desk trades LIVE cash automatically with no confirmation step, no waiting and no prompt. Exception: Kevin's explicit pause (desk.paused true) or disarm (liveMode.armed false) keeps it off. This switch is not an arm/disarm: armed stays as Kevin set it."
+  }
+ },
+ "paperMode": {
+  "startDate": "2026-10-26",
+  "startCashUsd": 100.0,
+  "stateDir": "${DESK_DATA}/paper-mode",
+  "brokerFile": "${DESK_DATA}/paper-mode/broker.json",
+  "ledgerFile": "${DESK_DATA}/paper-mode/desk-phases.json",
+  "proceduresDir": "${DESK_ROOT}/live/paper",
+  "scorecardDir": "${DESK_ROOT}/paper-mode",
+  "liveStatePathsProtected": [
+   "${DESK_DATA}/morning-session.json",
+   "${DESK_DATA}/week-desk.json",
+   "${DESK_DATA}/order-locks.json",
+   "${DESK_DATA}/shadow-orb-ledger.json"
+  ],
+  "liveStateDir": "${DESK_DATA}",
+  "reviseAppliesToConfig": false,
+  "maxQuoteAgeSeconds": 120,
+  "marketSlippagePct": 0.05,
+  "fillModel": "paper_broker.py docstring: quote-point fills at bid/ask; 1-minute-bar fills for resting orders (limit at min/max(limit, open); stop triggers at low<=stop, fills at min(stop, open), stop-limit rests if gapped through its limit); market +/-0.05% slippage",
+  "liveOrderTripwire": "python3 ${HELPERS_DIR}/paper_guard.py audit --orders <read-only live get_equity_orders raw> --since <paperMode.startedAt>: any live order created since paper mode started = ALERT Kevin",
+  "startedAt": "2026-10-23T12:00:00-04:00"
+ },
+ "desk": {
+  "singleRoutine": true,
+  "dispatcher": "${DESK_ROOT}/live/desk.md",
+  "clock": "python3 ${HELPERS_DIR}/desk_clock.py next",
+  "cron": "CRON_TZ=America/New_York */5 5-18 * * 1-5",
+  "paused": false,
+  "staleRunningMinutes": 12,
+  "maxAttempts": 3,
+  "manageClaimSeconds": 240,
+  "flattenAtEt": "15:50",
+  "kbRefreshEt": "18:00",
+  "holidays": [],
+  "earlyClose": {},
+  "setAt": "2026-10-23",
+  "replacesRoutines": 11,
+  "hardFlattenMinutesBeforeClose": 5,
+  "reportEarliestEt": "16:00",
+  "reportFallbackMinutesAfterClose": 5,
+  "phaseTimeoutMinutes": {
+   "scan": 15,
+   "refresh": 10,
+   "entries": 10,
+   "flatten": 10,
+   "hard-flatten": 10,
+   "report": 8,
+   "kb-refresh": 20,
+   "paper-summary": 8,
+   "default": 12
+  },
+  "liveBookMaxAgeSeconds": 600,
+  "phaseAutoExpiryNote": "desk_clock next auto-expires a running claim older than its timeout (marks failed 'auto-expired', counts as an attempt) so a crashed worker never leaves a phase stuck. Kevin 2026-11-10 16:02 ET: \"Fix mistakes and restart tomorrow\"",
+  "researchEt": "07:00"
+ },
+ "premarketPaper": {
+  "enabled": true,
+  "locked": true,
+  "approvedBy": "Kevin 2026-11-10 16:03 \"Run paper on premarket to test\" + 16:05 \"Repeat paper market test as part of rule set. 7:30 paper start. Test market until open. Switch to live cash at opening bell.\" + 16:09 \"Arm live at 9:30 am without live confirmation.\"",
+  "everyTradingDay": true,
+  "startEt": "07:30",
+  "noNewBuysAfterEt": "09:15",
+  "summaryAtEt": "09:20",
+  "liveSwitchEt": "09:30",
+  "stateDir": "${DESK_DATA}/premarket-paper",
+  "startCashUsd": "= live startCash of the day (paper copy; never live money)",
+  "liquidity": {
+   "shares": 5000,
+   "dollars": 25000,
+   "note": "premarket tape is thin; paper only"
+  },
+  "isolation": "separate paper state/broker/ledger rows under stateDir/<D>; DESK_PAPER_SESSION=1 makes reconcile.py refuse any write outside stateDir; paper P&L/kill switch/RT count/recap never mix with live",
+  "summary": {
+   "format": "PAPER \u2014 <Day Mon D> pre-open: checks <p>/<n> pass [FAILED: ...] | paper W/L a/b | paper $start \u2192 $end",
+   "failedCheckIsEscalation": true
+  },
+  "helper": "${HELPERS_DIR}/premarket_paper.py"
+ },
+ "selfLearning": {
+  "enabled": true,
+  "helper": "python3 ${HELPERS_DIR}/learn.py run --apply",
+  "runIn": "kb-refresh (\u226518:00) after the live day and the 07:30 paper session are in",
+  "authorizedBy": "Kevin 2026-11-10 16:07 ET: \"Use results for your logic set. Adjust and improve accordingly... Remove all rule sets that hinder reaching goal...\"",
+  "maxChangesPerDay": 3,
+  "minTrades": 30,
+  "lookbackTrades": 40,
+  "bounds": {
+   "tpModel.floorPct": {
+    "min": 2.0,
+    "max": 6.0,
+    "step": 1.0
+   },
+   "stallExit.afterMinutes": {
+    "min": 8,
+    "max": 25,
+    "step": 2
+   },
+   "entryFilters.ta.after1000Required": {
+    "min": 4,
+    "max": 5,
+    "step": 1
+   },
+   "entryFilters.minLastPriceAtEntry": {
+    "min": 0.5,
+    "max": 3.0,
+    "step": 0.5
+   },
+   "liquidityBandShares": {
+    "min": 25000,
+    "max": 200000,
+    "step": 25000
+   },
+   "discretion.killSwitch.dayPnlPctOfStartBank": {
+    "min": -7.0,
+    "max": -3.0,
+    "step": 1.0
+   },
+   "recoveryModel.thresholdPct": {
+    "min": 26,
+    "max": 70,
+    "step": 5
+   }
+  },
+  "hardFloors": [
+   "broker-truth reconcile",
+   "flatten before close (15:50/15:55)",
+   "cash equity longs only: no margin/options/shorts/crypto",
+   "Kevin-only arm/disarm/pause",
+   "some daily loss limit always on",
+   "per-trade max loss 5% from entry (maxTradeLoss; stop never wider than \u22125%; trade-cap backstop)",
+   "bank drawdown system stop at \u226450% of baseline (bankStop)",
+   "resting stop_limit hard stop on every whole-share position: trigger \u22124.5% / limit \u22125% (stopargs --entry + verify-protection)",
+   "\u22122% recovery decision point fixed (Kevin only)"
+  ],
+  "log": "config.selfLearningLog[] + improvementsApplied[]",
+  "lockedParams": [
+   "bankStop",
+   "desk.paused",
+   "liveMode",
+   "maxTradeLoss",
+   "premarketPaper",
+   "recoveryModel.decisionPointPct",
+   "recoveryModel.hardStop",
+   "tpModel.stopPct"
+  ]
+ },
+ "dayTraderKb": {
+  "by": "Kevin 2026-11-10 16:13 ET: \"Scrape daily reports and market news to see emerging potential patterns and trades. You're operating as a day trader now. Adjust knowledge base accordingly.\"",
+  "kb": "${DESK_ROOT}/kb/day-trader-kb.md",
+  "patterns": "${DESK_ROOT}/kb/patterns.json",
+  "watchlist": "${DESK_ROOT}/kb/watchlist-<D>.json",
+  "helper": "python3 ${HELPERS_DIR}/desk_learn.py patterns|watchlist|learn",
+  "phases": [
+   "research 07:00 (research.md)",
+   "kb-refresh 18:00 step 6b"
+  ],
+  "setups": [
+   "gap_and_go",
+   "orb_breakout",
+   "vwap_reclaim",
+   "momentum_pullback",
+   "recycle_bounce",
+   "midday_momentum"
+  ],
+  "watchlistUse": "priority input to discovery ranking; never bypasses a gate"
+ },
+ "maxTradeLoss": {
+  "enabled": true,
+  "locked": true,
+  "hardFloor": true,
+  "maxLossPctFromEntry": 5.0,
+  "authorizedBy": "Kevin 2026-11-10 16:25 ET: \"Add 5% loss rule on individual trades.\"",
+  "rule": "No position may lose more than 5% from entry. The resting protective stop_limit is the HARD STOP (trigger entry\u00d70.955, limit entry\u00d70.95; Kevin 16:28 supersedes the \u22122% resting stop); \u22122% is the recovery decision point (recovery.py); no stop/limit may ever be set below entry\u00d70.95 (reconcile.py stopargs --entry <avg> refuses it). BACKSTOP every fire: risk_floors.py trade-cap \u2192 any position with bid \u2264 entry\u00d70.95 (gap through the stop / stop-limit unfilled) \u2192 cancel its sells \u2192 verify \u2192 market sell at once.",
+  "helper": "python3 ${HELPERS_DIR}/risk_floors.py trade-cap --positions <pos> --quotes <quotes> --orders <orders>  (exit 8 = exit now)",
+  "neverChangedBy": [
+   "desk_learn.py",
+   "daily revise",
+   "any routine"
+  ]
+ },
+ "bankStop": {
+  "enabled": true,
+  "locked": true,
+  "hardFloor": true,
+  "thresholdPct": 80.0,
+  "baselineUsd": 100.0,
+  "baselineDate": "YYYY-MM-DD",
+  "baselineNote": "ILLUSTRATIVE. Set baselineUsd to live-account equity at the measurement start. Owner deposits raise the baseline; withdrawals lower it (record with risk_floors.py flow). Stop line = baselineUsd * (1 - thresholdPct/100). Example: baseline 100.00 \u2192 stop 50.00. A bad or zero portfolio read never trips.",
+  "equity": "get_portfolio(account_number=${BROKER_ACCOUNT_NUMBER}).total_value (cash + positions); fallback cash + equity_value. A bad/zero read never trips.",
+  "stateFile": "${DESK_DATA}/bank-stop.json",
+  "cashFlows": [],
+  "authorizedBy": "Kevin 2026-11-10 16:24 ET: \"Only stop automatic mode when total bank losses 50%.\"",
+  "onTrip": "flatten every position safely (cancel its stop \u2192 verify \u2192 market sell), cancel ALL open orders, write bank-flat-done; automatic mode OFF: no premarket paper, no 09:30 paper\u2192live switch, no new trades, every desk_clock fire idles 'bank_stop_tripped' until Kevin explicitly restarts (risk_floors.py bank-restart --by \"Kevin <words, time>\"). Escalation handed to the parent immediately.",
+  "onlySystemStops": [
+   "this bank stop (equity \u2264 50% of baseline)",
+   "Kevin's explicit command (desk.paused true / liveMode.armed false)"
+  ],
+  "notASystemStop": "daily kill switch (2 consecutive loss stops or \u22125% day) = day-only new-buy pause; resets next day",
+  "helper": "python3 ${HELPERS_DIR}/risk_floors.py bank-check --portfolio <get_portfolio raw> --apply  (exit 9 = SYSTEM STOP)",
+  "neverChangedBy": [
+   "desk_learn.py",
+   "daily revise",
+   "any routine"
+  ],
+  "restart": "Kevin only",
+  "tripwirePct": 90.0,
+  "setBy": "Kevin 2026-11-17 20:06 ET ('Evaluate using /deep-research and revise'; bank stop 20% + 10% tripwire confirmed)",
+  "note": "Stop when equity <= 80% of baseline (20% drawdown). Tripwire at 90% (10% drawdown): alert Kevin, halve size, owner review. Was 50% stop."
+ },
+ "recoveryModel": {
+  "enabled": true,
+  "helper": "python3 ${HELPERS_DIR}/recovery.py score --symbol S --entry E --price BID --bars5 <5m> [--bars1 <1m>] --spy5 <SPY 5m> [--sector5 <ETF 5m>] --catalyst intact|unknown|broken --log  (exit 10 = EXIT NOW)",
+  "authorizedBy": [
+   "Kevin 2026-11-10 16:28 ET: \"Auto review charts and sell at 2% if likelihood of recovery is less than 50%. Otherwise allow to go to a 5% loss then stop automatically.\"",
+   "Kevin 2026-11-10 16:30 ET: \"Test that percentage and adjust if needed. Greater or lower based on the bounce after -5% outs. If chart ends up recovering eventually make corrections to logic.\" (desk_learn may move thresholdPct within 30\u201370, logged)"
+  ],
+  "decisionPointPct": -3.45,
+  "decisionPointLocked": "Kevin only",
+  "hardStop": {
+   "triggerPct": -4.5,
+   "limitPct": -5.0,
+   "locked": "Kevin only",
+   "note": "resting stop_limit on every whole-share position: stop entry\u00d70.955, limit entry\u00d70.95 (fill never worse than \u22125%); risk_floors.py trade-cap market-sells anything \u2264 \u22125% (gap / unfilled)"
+  },
+  "thresholdPct": 38,
+  "thresholdBounds": {
+   "min": 26,
+   "max": 70,
+   "step": 5
+  },
+  "weights": {
+   "vwap": 0.2,
+   "trend1m": 0.1,
+   "trend5m": 0.15,
+   "dipVolume": 0.15,
+   "support": 0.15,
+   "rsi": 0.05,
+   "market": 0.1,
+   "catalyst": 0.1
+  },
+  "weightBounds": {
+   "min": 0.02,
+   "max": 0.35,
+   "step": 0.02
+  },
+  "minLabeled": 6,
+  "journal": "${DESK_DATA}/recovery-decisions.jsonl",
+  "postExitTracking": "after every loss exit (score sell + hard stop), stall exit, profit exit and every hold decision: recovery.py post-exit with the rest-of-session 5m bars (report.md, then next-day open at the 05:30 scan if useful) \u2192 label correct|wrong \u2192 desk_learn recovery_tune",
+  "backtest2026-11-10": {
+   "note": "Historical recovery-threshold grid omitted from this example. See reference/manage-and-recovery.md.",
+   "trades": 60,
+   "chosenOriginal": 55
+  },
+  "earlyThreshold": {
+   "enabled": true,
+   "beforeEt": "10:00",
+   "offset": -12,
+   "effective": "26 before 10:00 (38 \u2212 12), 38 from 10:00 (higher-risk+15 profile 2026-11-17)",
+   "evidence": "recovery-backtest-2026-11-10: \u22122% touches before 10:00 n20: T40 \u221228.3% / T55 \u221234.0% / always-sell \u221240%; from 10:00 n25: T55 \u221245.0% vs T40 \u221259.0%",
+   "decidedBy": "SILAS (final decision authority, Kevin 2026-11-10 16:49 ET)"
+  }
+ },
+ "decisionObjective": {
+  "primeDirective": "+5 percentage points decision success rate over baseline (Kevin 2026-11-10 16:31 ET: \"Our prime directive is +5% success rate on our decision-making. Improve and refine.\")",
+  "baselinePct": 25.8,
+  "goalPct": 30.8,
+  "baselineFrom": "all 60 live round trips 2026-10-05..2026-11-10 = 120 decisions (60 entries + 60 exits), exits labeled by rest-of-session 5m bars (kb/backtest-bars)",
+  "baselineByType": {
+   "entry": "17/60 28.3%",
+   "loss_exit": "8/39 20.5%",
+   "profit_exit": "4/17 23.5%",
+   "stall_exit": "2/4 50.0%",
+   "hold": "none yet (backtest proxy: hold beat \u22122% sell 26/45)",
+   "blocked": "no outcome data (wouldHit null) \u2014 excluded"
+  },
+  "definitions": {
+   "entry": "correct if the round trip closed with pnlUsd > 0",
+   "loss_exit": "(\u22122% score sell, \u22125% hard stop, any losing exit) correct if price did NOT get back to entry for the rest of the session",
+   "hold": "(hold at the \u22122% score check) correct if price got back above \u22122% before touching the \u22124.5% hard-stop trigger",
+   "stall_exit": "correct if price did not rise \u2265 2% above max(entry, exit) for the rest of the session",
+   "profit_exit": "(take-profit / trailing lock / profit exit) correct if price did not rise \u2265 2% above the exit price for the rest of the session",
+   "blocked": "correct if the blocked name would NOT have reached +2% before \u22122% (only when outcome data exists)"
+  },
+  "helper": "python3 ${HELPERS_DIR}/desk_learn.py decision-rate --date <D>  (line for the recap)",
+  "optimizer": "desk_learn.py learn --apply (bounded, logged) reports rolling rate vs goal; recovery_tune moves thresholdPct/weights from labeled outcomes"
+ },
+ "decisionAuthority": {
+  "holder": "the desk agent (SILAS)",
+  "since": "2026-11-10T16:49:00-05:00",
+  "until": "the owner specifically cancels it",
+  "kevinQuote": "You're suggestions are understood. Adjust playback to accommodate the suggestions. Continue using your logic. Consider my requests simply suggestions. You have the final decision authority until canceled specially.",
+  "meaning": "Kevin's trading requests are suggestions; the desk decides (evidence first, logged with 'decided by SILAS'), may adjust or override earlier settings, and never waits on Kevin.",
+  "hardFloorsUnchanged": [
+   "protective stop_limit on every whole-share position (hard stop \u22124.5% trigger / \u22125% limit)",
+   "5% per-trade max loss (trade-cap backstop)",
+   "50% bank drawdown system stop (Kevin restart only)",
+   "broker-truth reconcile",
+   "flatten before close (15:50 / 15:55)",
+   "cash equity longs only: no margin, options, shorts, crypto",
+   "Kevin-only pause / disarm / arm"
+  ],
+  "notDelegated": "arming/disarming/pausing live mode, restarting after the bank stop, moving the recovery decision point (currently \u22123.45%) or the hard stop"
+ },
+ "entryPlaybook": {
+  "enabled": true,
+  "effectiveFrom": "2026-11-11",
+  "decidedBy": "SILAS (final decision authority, Kevin 2026-11-10 16:49 ET); entries, not exits, decide profitability",
+  "liveSetups": [
+   "gap_and_go",
+   "early_momentum"
+  ],
+  "paperOnlySetups": [
+   "recycle_bounce",
+   "orb_breakout",
+   "midday_momentum",
+   "vwap_reclaim",
+   "momentum_pullback"
+  ],
+  "liveWindowEt": {
+   "from": "09:35",
+   "to": "10:00"
+  },
+  "aPlus": {
+   "enabled": true,
+   "minWatchlistScore": 0.51,
+   "requireTaPass": 3,
+   "maxPerDay": 3,
+   "untilEt": "13:30",
+   "note": "higher-risk+15 2026-11-17: after 10:00 up to 3 watchlist-catalyst entries (score \u2265 0.51), TA \u2265 3/5, until 13:30 ET, never a re-entry; tag playbookTag aPlus"
+  },
+  "watchlistDir": "${DESK_ROOT}/kb",
+  "watchlistPriority": "discovery scores watchlist names first; A+ path requires it after 10:00",
+  "promote": {
+   "minTrades": 30,
+   "minWinPct": 40,
+   "minAvgPct": 0.5,
+   "source": "07:30 premarket paper session roundTrips tagged `setup`"
+  },
+  "demote": {
+   "lookback": 15,
+   "minTrades": 30,
+   "maxWinPct": 30
+  },
+  "evidence": {
+   "gap_and_go (first entry 09:30\u201309:45)": "n20 win 40% avg +1.33% +$0.81",
+   "early_momentum (first entry 09:45\u201310:00)": "n11 win 36% avg +0.16% +$2.15",
+   "entries 10:00\u201310:30": "n11 win 9% avg \u22122.12% \u2212$2.05",
+   "entries \u226510:30": "n17 win 18% avg \u22120.65% \u2212$2.95",
+   "recycle_bounce (re-entries)": "n31 win 23% avg \u22120.73% \u2212$2.14",
+   "orb_breakout": "n5 win 20% avg \u22121.45%",
+   "midday_momentum": "n4 win 25% avg +0.03%"
+  },
+  "expectedEffect": "live entry decisions drawn from the 09:30\u201310:00 first-entry pool (n32 win ~41% vs 28.3% all) \u2192 entry success \u2248 +12 pp; fewer trades (\u2264 6 RT/day)"
+ },
+ "paperShadow": {
+  "enabled": true,
+  "locked": false,
+  "decidedBy": "SILAS 2026-11-10 16:55 ET (final decision authority, Kevin 16:49 / 16:5x 'You are in control.')",
+  "window": "09:30\u201315:45 ET on every live manage/entries fire, AFTER all live work",
+  "endEt": "15:45",
+  "noNewBuysAfterEt": "15:30",
+  "maxPositions": 2,
+  "startCashUsd": 100.0,
+  "stateDir": "${DESK_DATA}/intraday-shadow",
+  "helper": "python3 ${HELPERS_DIR}/paper_shadow.py tick --date <D> --quotes <this fire's quotes> --bars5 <this fire's 5m bars> --candidates <playbook-refused candidates> --budget-s 20",
+  "skipIfFireElapsedS": 150,
+  "budgetS": 20,
+  "trades": "paper-only setups: re-entries incl. winner recycle, orb_breakout, midday_momentum, vwap_reclaim, momentum_pullback, post-10:00 non-A+ candidates (live gate refusals whose ONLY blocking reasons start with 'playbook_')",
+  "exitLogic": "same as live: hard stop \u22124.5%/\u22125%, \u22122% recovery score (threshold by time), stall exit, TP floor, +2% trailing lock, shadow flatten 15:45",
+  "isolation": "no broker calls; writes only under stateDir; never touches live state, P&L, kill switch, round-trip cap, bank stop; separate journal shadow-decisions.jsonl",
+  "evidence": "roundTrips (source paper_shadow, setup-tagged) feed desk_learn setup_promotion; post-close `paper_shadow.py label` \u2192 paper decision-success (`desk_learn.py decision-rate --paper`)"
+ },
+ "riskProfile": {
+  "name": "higher-risk+15",
+  "active": true,
+  "appliedAt": "2026-11-17T09:29:19-05:00",
+  "effectiveFrom": "2026-11-17",
+  "appliedBy": "Kevin 09:27 ET request \"Widen your risk tolerance by 15% confirm\" (applied by SILAS under final decision authority)",
+  "priorProfile": "higher-risk",
+  "priorAppliedAt": "2026-11-13T09:28:44-05:00",
+  "new": {
+   "softStopDecisionPointPct": -3.45,
+   "recoveryThreshold": {
+    "before1000": 26,
+    "from1000": 38
+   },
+   "taRequiredPassCount": "3/5 all day (unchanged)",
+   "after1000Entries": {
+    "maxPerDay": 3,
+    "untilEt": "13:30",
+    "minWatchlistScore": 0.51,
+    "requireTaPass": 3
+   },
+   "maxRoundTrips": 9,
+   "stallExitMinutes": 14,
+   "tpFloorPct": 5.0
+  },
+  "previous": {
+   "stopLossPct": -3.0,
+   "recoveryModel.decisionPointPct": -3.0,
+   "recoveryModel.thresholdPct": 45,
+   "recoveryModel.earlyThreshold.effective": "30 before 10:00 (45 \u2212 15), 45 from 10:00",
+   "recoveryModel.earlyThreshold.offset": -15,
+   "recoveryModel.thresholdBounds.min": 30,
+   "fractionalLane.stopLossPct": -3.0,
+   "entryFilters.ta.requiredPassCount": 3,
+   "entryFilters.ta.requiredPassCountByTime": [
+    {
+     "fromEt": "09:30",
+     "toEt": "16:00",
+     "requiredPassCount": 3,
+     "tag": "after1000-5of5",
+     "note": "higher-risk 2026-11-13: 3/5 all day (tag kept so desk_learn tunes this entry, step \u00b11 within 3..5)"
+    }
+   ],
+   "entryFilters.ta.lateWindowRule.requiredPassCount": 3,
+   "entryFilters.ta.scoring.mustPassAtLeastNOf5TaChecks": 3,
+   "entryFilters.ta.scoring.mustPassAtLeastNOf5TaChecksFrom1030": 3,
+   "entryPlaybook.aPlus": {
+    "enabled": true,
+    "minWatchlistScore": 0.6,
+    "requireTaPass": 3,
+    "maxPerDay": 3,
+    "untilEt": "13:00",
+    "note": "higher-risk 2026-11-13: after 10:00 up to 3 watchlist-catalyst entries (score \u2265 0.6), TA \u2265 3/5, until 13:00 ET, never a re-entry; tag playbookTag aPlus"
+   },
+   "maxRoundTrips": 8,
+   "discretion.allDaySession.rtCap": 8,
+   "fractionalLane.roundTripCapShared": 8,
+   "stallExit.afterMinutes": 12,
+   "tpModel.floorPct": 5.0,
+   "entryFilters.ta.strictMinPassCount": 3,
+   "selfLearning.bounds.recoveryModel.thresholdPct.min": 30
+  },
+  "unchanged": [
+   "hard stop trigger entry\u00d70.955 / limit entry\u00d70.95",
+   "\u22125% market-sell backstop",
+   "5% max loss per trade",
+   "bidToStop/spread/RVOL/liquidity/$1 floor/dilution/merger hard filters (bidToStopPct stays \u22122.0)",
+   "full-cash sizing, max 2 slots",
+   "no re-buy after a losing exit",
+   "50% bank stop (baseline = measurement-start equity + owner cash flows; stop line = 50% of baseline)",
+   "flatten before close",
+   "no margin/options/shorts/crypto",
+   "owner-only arm/disarm/pause",
+   "09:30 auto live switch",
+   "TA 3/5 all day",
+   "tpModel.floorPct stays 5.0 (desk_learn already tuned it from 6.0 on 2026-11-13)"
+  ],
+  "measure": "desk_learn + recaps: compare decision success rate and P&L of trades on/after 2026-11-17 (riskProfile higher-risk+15) vs higher-risk (from 2026-11-13) and prior baseline 25.8%",
+  "learnPolicy": "desk_learn.py: the guarded params are not tuned until \u2265 6 live trades taken on/after 2026-11-17 under this profile (recovery_tune uses only outcomes dated \u2265 2026-11-17); after that it tunes FROM the new values (TA count \u00b11 within 3..5, stall \u00b12 min, threshold within bounds step 5). recoveryModel.decisionPointPct stays Kevin-locked at \u22123.45.",
+  "minTradesBeforeTune": 30,
+  "guardedParams": [
+   "stallExit.afterMinutes",
+   "entryFilters.ta.requiredPassCountByTime",
+   "recoveryModel.thresholdPct"
+  ]
+ },
+ "scan": {
+  "premarketScanEt": "05:30",
+  "refreshScanEt": "09:10",
+  "refreshRoutine": "equity-am-premarket-refresh-9-10",
+  "preliminaryAt0630": true,
+  "doNotRejectAt0630On": [
+   "minAvgSharesPer5MinBar",
+   "minRelativeVolume"
+  ],
+  "liquidityStatusAt0630": "volumeCheckPendingOpen",
+  "rvolStatusAt0630": "preliminary",
+  "prefilterGapPctMin": 5.0,
+  "prefilterGapPctMax": 30.0,
+  "preferGapPct": [
+   8.0,
+   40.0
+  ],
+  "excludeUnaffordableFromShortlist": true,
+  "dilutionNeverShortlist": true,
+  "dilutionLookbackDays": 30,
+  "preferPremarketSpreadMaxPct": 3.0,
+  "spreadAbovePreferRankPenalty": "sort_below_all_le_3pct_names",
+  "rankOrder": [
+   "fresh_positive_catalyst",
+   "premarket_spread_le_3pct",
+   "premarket_volume_and_rvolPreliminary",
+   "mid_rank_not_blown_off",
+   "fade_down_rank_if_gt15pct_below_pm_high"
+  ],
+  "alternatesCount": 5,
+  "evidence": "Week 2 (Oct 5\u20137): unaffordable BBD/BCYC/PRME took 3 of 15 shortlist slots; dilution names AXG (\u22129.4%) / GIPR (skipped); the 3 shortlist names that paid (QTEX Mon, SCKT, WETO) had scan spreads 0.76\u20130.92%; the 6 names >3% premarket spread produced 0 winners + the AXG loss; only 6 of 15 shortlist names traded. FINRA/SEC: extended-hours liquidity thinner, spreads wider (see 2026-10-08-online-research.md).",
+  "appliedAt": "2026-10-07T19:45:00-04:00",
+  "fadeDownRank": {
+   "enabled": true,
+   "fadedFromPmHighPctGt": 15.0,
+   "action": "sort_below_all_non_faded_names",
+   "exclude": false,
+   "appliesTo": [
+    "scan_0630",
+    "refresh_0910"
+   ],
+   "trackField": "fadeDroppedWinner",
+   "revertIf": "revert if it drops an eventual winner twice (fade-down-ranked name later hits +2% from an entry-eligible price); track fadeDroppedWinner"
+  },
+  "workingFilters": {
+   "note": "Thu Oct 8 paper+live: PREDICATE_IN_LIST on INSTRUMENT_TYPE fails (DXFeed wants symbol:string). Use PREDICATE_EQUAL. %chg units are ratios not percents. Price is FILTER_TYPE_LAST not PRICE. Columns Bid Price / Ask Price / Volume (not Bid-ask spread).",
+   "instrumentType": {
+    "filter_type": "FILTER_TYPE_INSTRUMENT_TYPE",
+    "predicate": "PREDICATE_EQUAL",
+    "values": [
+     "STOCK"
     ]
-  },
-  "scan": {
-    "premarketScanEt": "05:30",
-    "refreshScanEt": "09:10",
-    "refreshRoutine": "equity-am-premarket-refresh-9-10",
-    "preliminaryAt0630": true,
-    "doNotRejectAt0630On": [
-      "minAvgSharesPer5MinBar",
-      "minRelativeVolume"
+   },
+   "percentChangeFromClose": {
+    "filter_type": "FILTER_TYPE_PERCENT_CHANGE_FROM_CLOSE",
+    "predicate": "PREDICATE_BETWEEN",
+    "values": [
+     "0.08",
+     "0.60"
     ],
-    "liquidityStatusAt0630": "volumeCheckPendingOpen",
-    "rvolStatusAt0630": "preliminary",
-    "prefilterGapPctMin": 5.0,
-    "prefilterGapPctMax": 30.0,
-    "preferGapPct": [
-      8.0,
-      40.0
-    ],
-    "excludeUnaffordableFromShortlist": true,
-    "dilutionNeverShortlist": true,
-    "dilutionLookbackDays": 30,
-    "preferPremarketSpreadMaxPct": 3.0,
-    "spreadAbovePreferRankPenalty": "sort_below_all_le_3pct_names",
-    "rankOrder": [
-      "fresh_positive_catalyst",
-      "premarket_spread_le_3pct",
-      "premarket_volume_and_rvolPreliminary",
-      "mid_rank_not_blown_off",
-      "fade_down_rank_if_gt15pct_below_pm_high"
-    ],
-    "alternatesCount": 5,
-    "evidence": "Week 2 (Oct 5\u20137): unaffordable BBD/BCYC/PRME took 3 of 15 shortlist slots; dilution names AXG (\u22129.4%) / GIPR (skipped); the 3 shortlist names that paid (QTEX Mon, SCKT, WETO) had scan spreads 0.76\u20130.92%; the 6 names >3% premarket spread produced 0 winners + the AXG loss; only 6 of 15 shortlist names traded. FINRA/SEC: extended-hours liquidity thinner, spreads wider (see 2026-10-08-online-research.md).",
-    "appliedAt": "2026-10-07T19:45:00-04:00",
-    "fadeDownRank": {
-      "enabled": true,
-      "fadedFromPmHighPctGt": 15.0,
-      "action": "sort_below_all_non_faded_names",
-      "exclude": false,
-      "appliesTo": [
-        "scan_0630",
-        "refresh_0910"
-      ],
-      "trackField": "fadeDroppedWinner",
-      "revertIf": "revert if it drops an eventual winner twice (fade-down-ranked name later hits +2% from an entry-eligible price); track fadeDroppedWinner"
-    },
-    "workingFilters": {
-      "note": "Thu Oct 8 paper+live: PREDICATE_IN_LIST on INSTRUMENT_TYPE fails (DXFeed wants symbol:string). Use PREDICATE_EQUAL. %chg units are ratios not percents. Price is FILTER_TYPE_LAST not PRICE. Columns Bid Price / Ask Price / Volume (not Bid-ask spread).",
-      "instrumentType": {
-        "filter_type": "FILTER_TYPE_INSTRUMENT_TYPE",
-        "predicate": "PREDICATE_EQUAL",
-        "values": [
-          "STOCK"
-        ]
-      },
-      "percentChangeFromClose": {
-        "filter_type": "FILTER_TYPE_PERCENT_CHANGE_FROM_CLOSE",
-        "predicate": "PREDICATE_BETWEEN",
-        "values": [
-          "0.08",
-          "0.60"
-        ],
-        "interval": "1d",
-        "note": "ratios 0.08-0.60 = 8-60% (0.05-0.60 premarket); interval MUST be \"1d\" (INTERVAL_1_DAY rejected by DXFeed, verified Thu 17:10 preview_scan); NEVER pass 8/60 as percents (returns 0 rows)"
-      },
-      "lastPrice": {
-        "filter_type": "FILTER_TYPE_LAST",
-        "predicate": "PREDICATE_BETWEEN",
-        "values": [
-          "0.10",
-          "<bankUsd>"
-        ]
-      },
-      "volume": {
-        "filter_type": "FILTER_TYPE_VOLUME",
-        "predicate": "PREDICATE_GREATER_THAN",
-        "values": [
-          "<minDayVolume>"
-        ],
-        "interval": "1d",
-        "optional": true,
-        "note": "PREDICATE_GREATER is rejected (unknown predicate); use PREDICATE_GREATER_THAN; verified Thu 17:10"
-      },
-      "columns": [
-        "Bid Price",
-        "Ask Price",
-        "Volume"
-      ],
-      "neverUse": [
-        "FILTER_TYPE_STOCK",
-        "FILTER_TYPE_PERCENT_CHANGE",
-        "FILTER_TYPE_PRICE",
-        "PREDICATE_IN_LIST on INSTRUMENT_TYPE",
-        "column Bid-ask spread",
-        "percent values 5/8/60 instead of ratios 0.05/0.08/0.60",
-        "interval INTERVAL_1_DAY (use \"1d\")",
-        "PREDICATE_GREATER (use PREDICATE_GREATER_THAN)"
-      ],
-      "appliedAt": "2026-10-08T17:05:00-04:00",
-      "evidence": "Thu scan/refresh/manage: IN_LIST rejected; %chg 5\u201360 returned 0 rows, ratios 0.05\u20130.60 \u2192 38; FILTER_TYPE_PRICE unknown; Bid-ask spread column rejected",
-      "excludeFromResultsByName": [
-        "Warrant",
-        "Unit",
-        "Right",
-        "Preferred",
-        "Depositary Share (pref)"
-      ],
-      "excludeNote": "Asset type STOCK still returns warrants (e.g. EOSEW \"Eos Energy Enterprises, Inc. Warrant\"); drop rows whose Name contains Warrant/Unit/Right/Preferred",
-      "verifiedAt": "2026-10-08T17:10:00-04:00",
-      "verifiedBy": "live-procedures executor: preview_scan 1d+EQUAL+LAST+Bid/Ask/Volume columns -> 48 rows; +VOLUME GREATER_THAN 1d -> 27 rows",
-      "columnsNote": "pass only these as columns [{\"display_name\":\"Bid Price\"},{\"display_name\":\"Ask Price\"},{\"display_name\":\"Volume\"}]; Symbol/Name/Last/% Change/Net change/Asset type come back automatically from the filters/defaults (verified Thu 17:10)"
-    },
-    "minLastPrice": 2.0,
-    "prefilterNote": "2026-10-22: premarket prefilter 5-30% (entries enforce 8-25% at entry); price >= $2; sources stay broad per universePolicy"
-  },
-  "schedule": {
-    "scan": "CRON_TZ=America/New_York 30 5 * * 1-5",
-    "scanRefresh": "CRON_TZ=America/New_York 10 9 * * 1-5",
-    "entries": "CRON_TZ=America/New_York 35 9 * * 1-5",
-    "manageA": "CRON_TZ=America/New_York 4,9,14,19,24,29,34,39,44,49,54,59 9-15 * * 1-5",
-    "manageB": "CRON_TZ=America/New_York 6,11,16,21,26,31,36,41,46,51,56 9-15 * * 1-5",
-    "flattenDailyRevise": "CRON_TZ=America/New_York 0 11 * * 1-5",
-    "report1115": "CRON_TZ=America/New_York 15 11 * * 1-5",
-    "note": "Discretionary session armed: Engineering Bot extended routines 2026-10-17 ~17:45 ET (manage 9-15, flatten-backup 10:57 + 15:45/15:50, report half-hourly through 15:52, scan 05:30). Config schedule fields synced 2026-10-18 by SILAS Bot periodic wake.",
-    "routineIds": {
-      "scan": "equity-am-sub-2-scan",
-      "scanRefresh": "equity-am-premarket-refresh-9-10",
-      "entries": "equity-am-sub-2-entries",
-      "manageA": "equity-am-sub-2-manage",
-      "manageB": "equity-am-sub-2-manage-b",
-      "flattenDailyRevise": "equity-am-sub-2-flatten-daily-revise",
-      "report1115": "equity-am-11-15-daily-report"
-    },
-    "proposedDiscretionary": {
-      "manageA": "CRON_TZ=America/New_York 4,9,14,19,24,29,34,39,44,49,54,59 9-15 * * 1-5",
-      "manageB": "CRON_TZ=America/New_York 6,11,16,21,26,31,36,41,46,51,56 9-15 * * 1-5",
-      "flattenBackup": [
-        "CRON_TZ=America/New_York 57 10 * * 1-5",
-        "CRON_TZ=America/New_York 8 11 * * 1-5",
-        "CRON_TZ=America/New_York 45,50 15 * * 1-5"
-      ],
-      "report": [
-        "CRON_TZ=America/New_York 15,45 11 * * 1-5",
-        "CRON_TZ=America/New_York 15,45 12,13,14 * * 1-5",
-        "CRON_TZ=America/New_York 52 15 * * 1-5"
-      ],
-      "status": "APPLIED 2026-10-17 ~17:45 ET by Engineering Bot; schedule fields synced 2026-10-18"
-    },
-    "flattenBackup": [
-      "CRON_TZ=America/New_York 57 10 * * 1-5",
-      "CRON_TZ=America/New_York 8 11 * * 1-5",
-      "CRON_TZ=America/New_York 45,50 15 * * 1-5"
-    ],
-    "report": [
-      "CRON_TZ=America/New_York 15,45 11 * * 1-5",
-      "CRON_TZ=America/New_York 15,45 12,13,14 * * 1-5",
-      "CRON_TZ=America/New_York 52 15 * * 1-5"
+    "interval": "1d",
+    "note": "ratios 0.08-0.60 = 8-60% (0.05-0.60 premarket); interval MUST be \"1d\" (INTERVAL_1_DAY rejected by DXFeed, verified Thu 17:10 preview_scan); NEVER pass 8/60 as percents (returns 0 rows)"
+   },
+   "lastPrice": {
+    "filter_type": "FILTER_TYPE_LAST",
+    "predicate": "PREDICATE_BETWEEN",
+    "values": [
+     "0.10",
+     "<bankUsd>"
     ]
-  },
-  "errorLogging": {
-    "field": "errorsAutoFixed",
-    "where": "morning-session.json",
-    "rowSchema": {
-      "at": "ISO-8601 ET",
-      "routine": "scan|scan-refresh|entries|manage-a|manage-b|flatten|report",
-      "what": "string",
-      "fix": "string",
-      "result": "fixed|partially_fixed|unfixed"
-    },
-    "allRoutines": true,
-    "note": "Kevin Wed 19:41: every routine logs any error it auto-fixes (what, when, fix). Flatten copies them into the scorecard; 11:15 report summarizes."
-  },
-  "dailyReport": {
-    "reportAtEt": "16:05",
-    "routine": "equity-am-11-15-daily-report",
-    "readOnly": true,
-    "reads": [
-      "morning-session.json dailyReport/roundTrips/errorsAutoFixed/improvementsApplied",
-      "${DESK_ROOT}/YYYY-MM-DD-scorecard.md"
+   },
+   "volume": {
+    "filter_type": "FILTER_TYPE_VOLUME",
+    "predicate": "PREDICATE_GREATER_THAN",
+    "values": [
+     "<minDayVolume>"
     ],
-    "scorecardSections": [
-      "Summary",
-      "Round trips",
-      "Time buckets",
-      "Shortlist conversion",
-      "Errors detected + auto-fixed",
-      "Improvements applied",
-      "Proposed (needs Kevin OK)",
-      "Broker-sync audit",
-      "Rejects / alternates follow-up"
-    ],
-    "flattenMustFinishByEt": "15:58"
+    "interval": "1d",
+    "optional": true,
+    "note": "PREDICATE_GREATER is rejected (unknown predicate); use PREDICATE_GREATER_THAN; verified Thu 17:10"
+   },
+   "columns": [
+    "Bid Price",
+    "Ask Price",
+    "Volume"
+   ],
+   "neverUse": [
+    "FILTER_TYPE_STOCK",
+    "FILTER_TYPE_PERCENT_CHANGE",
+    "FILTER_TYPE_PRICE",
+    "PREDICATE_IN_LIST on INSTRUMENT_TYPE",
+    "column Bid-ask spread",
+    "percent values 5/8/60 instead of ratios 0.05/0.08/0.60",
+    "interval INTERVAL_1_DAY (use \"1d\")",
+    "PREDICATE_GREATER (use PREDICATE_GREATER_THAN)"
+   ],
+   "appliedAt": "2026-10-08T17:05:00-04:00",
+   "evidence": "Thu scan/refresh/manage: IN_LIST rejected; %chg 5\u201360 returned 0 rows, ratios 0.05\u20130.60 \u2192 38; FILTER_TYPE_PRICE unknown; Bid-ask spread column rejected",
+   "excludeFromResultsByName": [
+    "Warrant",
+    "Unit",
+    "Right",
+    "Preferred",
+    "Depositary Share (pref)"
+   ],
+   "excludeNote": "Asset type STOCK still returns warrants (e.g. EOSEW \"Eos Energy Enterprises, Inc. Warrant\"); drop rows whose Name contains Warrant/Unit/Right/Preferred",
+   "verifiedAt": "2026-10-08T17:10:00-04:00",
+   "verifiedBy": "live-procedures executor: preview_scan 1d+EQUAL+LAST+Bid/Ask/Volume columns -> 48 rows; +VOLUME GREATER_THAN 1d -> 27 rows",
+   "columnsNote": "pass only these as columns [{\"display_name\":\"Bid Price\"},{\"display_name\":\"Ask Price\"},{\"display_name\":\"Volume\"}]; Symbol/Name/Last/% Change/Net change/Asset type come back automatically from the filters/defaults (verified Thu 17:10)"
   },
-  "accountNumber": "${BROKER_ACCOUNT_NUMBER}",
-  "accountNickname": "the live account",
-  "bankUsd": 100.0,
-  "bankMode": "full_cash",
-  "bankUsdFixed": null,
-  "bankNote": "ILLUSTRATIVE. Read cash + equity from the broker portfolio each morning. Do not copy a stored balance from this file."
+  "minLastPrice": 2.0,
+  "prefilterNote": "2026-10-22: premarket prefilter 5-30% (entries enforce 8-25% at entry); price >= $2; sources stay broad per universePolicy"
+ },
+ "schedule": {
+  "scan": "CRON_TZ=America/New_York 30 5 * * 1-5",
+  "scanRefresh": "CRON_TZ=America/New_York 10 9 * * 1-5",
+  "entries": "CRON_TZ=America/New_York 35 9 * * 1-5",
+  "manageA": "CRON_TZ=America/New_York 4,9,14,19,24,29,34,39,44,49,54,59 9-15 * * 1-5",
+  "manageB": "CRON_TZ=America/New_York 6,11,16,21,26,31,36,41,46,51,56 9-15 * * 1-5",
+  "flattenDailyRevise": "CRON_TZ=America/New_York 0 11 * * 1-5",
+  "report1115": "CRON_TZ=America/New_York 15 11 * * 1-5",
+  "note": "Discretionary session armed: Engineering Bot extended routines 2026-10-17 ~17:45 ET (manage 9-15, flatten-backup 10:57 + 15:45/15:50, report half-hourly through 15:52, scan 05:30). Config schedule fields synced 2026-10-18 by SILAS Bot periodic wake.",
+  "routineIds": {
+   "scan": "equity-am-sub-2-scan",
+   "scanRefresh": "equity-am-premarket-refresh-9-10",
+   "entries": "equity-am-sub-2-entries",
+   "manageA": "equity-am-sub-2-manage",
+   "manageB": "equity-am-sub-2-manage-b",
+   "flattenDailyRevise": "equity-am-sub-2-flatten-daily-revise",
+   "report1115": "equity-am-11-15-daily-report"
+  },
+  "proposedDiscretionary": {
+   "manageA": "CRON_TZ=America/New_York 4,9,14,19,24,29,34,39,44,49,54,59 9-15 * * 1-5",
+   "manageB": "CRON_TZ=America/New_York 6,11,16,21,26,31,36,41,46,51,56 9-15 * * 1-5",
+   "flattenBackup": [
+    "CRON_TZ=America/New_York 57 10 * * 1-5",
+    "CRON_TZ=America/New_York 8 11 * * 1-5",
+    "CRON_TZ=America/New_York 45,50 15 * * 1-5"
+   ],
+   "report": [
+    "CRON_TZ=America/New_York 15,45 11 * * 1-5",
+    "CRON_TZ=America/New_York 15,45 12,13,14 * * 1-5",
+    "CRON_TZ=America/New_York 52 15 * * 1-5"
+   ],
+   "status": "APPLIED 2026-10-17 ~17:45 ET by Engineering Bot; schedule fields synced 2026-10-18"
+  },
+  "flattenBackup": [
+   "CRON_TZ=America/New_York 57 10 * * 1-5",
+   "CRON_TZ=America/New_York 8 11 * * 1-5",
+   "CRON_TZ=America/New_York 45,50 15 * * 1-5"
+  ],
+  "report": [
+   "CRON_TZ=America/New_York 15,45 11 * * 1-5",
+   "CRON_TZ=America/New_York 15,45 12,13,14 * * 1-5",
+   "CRON_TZ=America/New_York 52 15 * * 1-5"
+  ]
+ },
+ "errorLogging": {
+  "field": "errorsAutoFixed",
+  "where": "morning-session.json",
+  "rowSchema": {
+   "at": "ISO-8601 ET",
+   "routine": "scan|scan-refresh|entries|manage-a|manage-b|flatten|report",
+   "what": "string",
+   "fix": "string",
+   "result": "fixed|partially_fixed|unfixed"
+  },
+  "allRoutines": true,
+  "note": "Kevin Wed 19:41: every routine logs any error it auto-fixes (what, when, fix). Flatten copies them into the scorecard; 11:15 report summarizes."
+ },
+ "dailyReport": {
+  "reportAtEt": "16:05",
+  "routine": "equity-am-11-15-daily-report",
+  "readOnly": true,
+  "reads": [
+   "morning-session.json dailyReport/roundTrips/errorsAutoFixed/improvementsApplied",
+   "${DESK_ROOT}/YYYY-MM-DD-scorecard.md"
+  ],
+  "scorecardSections": [
+   "Summary",
+   "Round trips",
+   "Time buckets",
+   "Shortlist conversion",
+   "Errors detected + auto-fixed",
+   "Improvements applied",
+   "Proposed (needs Kevin OK)",
+   "Broker-sync audit",
+   "Rejects / alternates follow-up"
+  ],
+  "flattenMustFinishByEt": "15:58"
+ },
+ "accountNumber": "${BROKER_ACCOUNT_NUMBER}",
+ "accountNickname": "the live account",
+ "bankUsd": 100.0,
+ "bankMode": "risk_1pct",
+ "bankUsdFixed": null,
+ "bankNote": "ILLUSTRATIVE. Read cash + equity from the broker portfolio each morning. Do not copy a stored balance from this file.",
+ "expectancyGate": {
+  "minLiveTrades": 100,
+  "metrics": [
+   "winPct",
+   "avgWinPct",
+   "avgLossPct",
+   "payoffRatio",
+   "netUsdPerTradeAfterSpread",
+   "stopSlippagePctVsTrigger"
+  ],
+  "rule": "Scale size or promote a setup only after >= 100 live trades show winPct > avgLoss/(avgWin+avgLoss). 'Decision success' is kept as a secondary diagnostic only.",
+  "setBy": "Kevin 2026-11-17 20:06 ET ('Evaluate using /deep-research and revise'; bank stop 20% + 10% tripwire confirmed)"
+ },
+ "accountRules": {
+  "type": "limited_margin",
+  "checkEachFire": "get_accounts type must be limited_margin; otherwise disable same-day recycling and size from settled cash only",
+  "buyCapFracOfBuyingPower": 0.95,
+  "hardStopOrderCheckTerms": [
+   "debit",
+   "excess obligation",
+   "good faith",
+   "freeriding",
+   "free riding",
+   "90-day",
+   "pattern day",
+   "day trade"
+  ],
+  "pdt": "PDT rule ended 2026-06-04 (FINRA RN 26-10; SEC Rel. 34-105226). The round-trip cap is a strategy setting.",
+  "assetWhitelist": [
+   "equity_long"
+  ],
+  "approvalRequired": "order with customer_approval_required=true occupies a slot, is never duplicated, cancelled at next fire if pending (15:50 latest); a pending protective stop = unprotected (Floor 9)"
+ },
+ "regimeGate": {
+  "script": "scripts/gecko_regime.py",
+  "noNewBuysWhen": [
+   "DEFENSIVE",
+   "UNKNOWN"
+  ],
+  "logLabelOnEveryTrade": true,
+  "setBy": "Kevin 2026-11-17 20:06 ET ('Evaluate using /deep-research and revise'; bank stop 20% + 10% tripwire confirmed)"
+ },
+ "stopMonitoring": {
+  "nearTriggerPct": 1.0,
+  "watchSeconds": 60,
+  "backstopOrder": "marketable limit at bid x 0.97 (not raw market)",
+  "checkHaltFirst": true,
+  "note": "Realized losses can exceed 5% on gaps/LULD halts."
+ },
+ "dilutionVeto": {
+  "rule": "veto any name with an effective shelf (S-3/F-3) or ATM program with remaining capacity, not only filings in the last 30 days"
+ },
+ "washSale": {
+  "flagRebuyWithinDaysOfLoss": 30
+ },
+ "paperVariants2026": {
+  "compare": [
+   "v1_current",
+   "v2_evidence"
+  ],
+  "brokerFiles": {
+   "v1_current": "${DESK_DATA}/paper-mode/broker_v1.json",
+   "v2_evidence": "${DESK_DATA}/paper-mode/broker_v2.json"
+  },
+  "minTradesBeforeDecision": 100,
+  "setBy": "Kevin 2026-11-17 20:06 ET ('Evaluate using /deep-research and revise'; bank stop 20% + 10% tripwire confirmed)",
+  "v2_evidence": {
+   "primarySetup": "orb_breakout",
+   "orb": "buy on break of 5-min opening-range high, price above session VWAP; stop 10% of daily ATR or under range low (must fit within 4.5%); 1% risk; hold to 15:50 flatten",
+   "minLastPrice": 5.0,
+   "minAvgDailyVolume": 1000000,
+   "dayMovePct": [
+    8,
+    15
+   ],
+   "taGate": "RVOL>=1.75 AND price>=session VWAP AND volume-shape (all required); StochRSI/Bollinger/Fibonacci informational only",
+   "trailActivatePct": 5.0,
+   "trail": "max(high-water - 1.5 x ATR5(14), session VWAP, last higher low)",
+   "stallExit": "14 min AND hw<+1% AND (price<VWAP OR below entry-bar low)",
+   "stop": "structural low - max(3 ticks, 0.35 x ATR5(14)), stepped past nearest .00/.50/.x0; skip if stop or 2 x ATR5 > 4.5%",
+   "stopLimitTrigger": 0.96,
+   "stopLimitLimit": 0.95,
+   "recoverySweptLowSupport": true,
+   "flattenSub3At": "15:30"
+  }
+ }
 }

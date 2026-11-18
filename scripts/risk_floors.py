@@ -131,9 +131,18 @@ def cmd_bank_check(a):
     rec = dict(rec or {}); rec.update({"lastCheckAt": iso(now), "lastEquityUsd": eq, "baselineUsd": base, "stopAtOrBelowUsd": line})
     if hit and not was:
         rec.update({"tripped": True, "trippedAt": iso(now), "trippedEquityUsd": eq, "flattenDone": False,
-                    "escalation": f"SYSTEM STOP — bank drawdown: live equity ${eq:.2f} ≤ 50% of baseline ${base:.2f} (line ${line:.2f}). "
+                    "escalation": f"SYSTEM STOP — bank drawdown: live equity ${eq:.2f} ≤ {pct:g}% of baseline ${base:.2f} (line ${line:.2f}). "
                                   "Flattening + cancelling all orders now; automatic mode OFF (no paper→live switch, no new trades) until Kevin explicitly restarts.",
                     "escalationNotifiedAt": None})
+    # TRIPWIRE (Kevin 2026-11-17 20:06 ET, evaluation item 3): equity ≤ tripwirePct of baseline → alert Kevin, halve size, owner review
+    tw = num(bs_cfg(C).get("tripwirePct"), 0.0)
+    if tw and eq is not None and not (hit or was):
+        tw_line = round(base * tw / 100, 2); tw_hit = eq <= tw_line + 1e-9
+        out.update(tripwirePct=tw, tripwireAtOrBelowUsd=tw_line, tripwire=tw_hit, sizeMultiplier=(0.5 if tw_hit else 1.0))
+        if tw_hit and not rec.get("tripwireAlertedAt"):
+            rec["tripwireAlertedAt"] = iso(now)
+            out["tripwireEscalation"] = (f"TRIPWIRE — live equity ${eq:.2f} ≤ {tw:g}% of baseline ${base:.2f} (line ${tw_line:.2f}): "
+                                         "size halved until Kevin reviews; system stop at " + f"${line:.2f}.")
     if a.apply: jsave(state_file(C), rec)
     out.update(ok=not (hit or was), tripped=hit or was, newlyTripped=hit and not was, escalation=rec.get("escalation") if (hit or was) else None,
                next=("SYSTEM STOP: run bank-stop.md now (cancel all open orders → flatten every position → bank-flat-done), hand `escalation` to the parent at once"

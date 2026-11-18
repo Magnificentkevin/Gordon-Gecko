@@ -1,5 +1,12 @@
 # Reporting
 
+> **Evaluation revisions 2026-11-17 20:06 ET (supersede conflicting lines below).** Source: `reports/Gordongecko strategy evaluation.md`; bank stop confirmed by Kevin.
+> - Recaps lead with expectancy: win %, avg win %, avg loss %, payoff ratio, net $/trade after spread, stop slippage vs trigger, regime label. Decision success goes in a footnote.
+> - Flag wash sales: any re-buy within 30 days of a losing exit.
+> - During the v2 test, PAPER summaries show `v1_current` and `v2_evidence` side by side.
+> - Escalate immediately: bank tripwire (−10%), bank stop (−20%), any order-check hard-stop text.
+
+
 The desk is quiet. Most fires send nothing. The owner hears from the desk
 only in the cases below, each at most once.
 

@@ -1,5 +1,12 @@
 # Manage and recovery
 
+> **Evaluation revisions 2026-11-17 20:06 ET (supersede conflicting lines below).** Source: `reports/Gordongecko strategy evaluation.md`; bank stop confirmed by Kevin.
+> - **Trail:** v1 activates at +2% (`tpModel.params.trailActivatePct` 2.0, as coded). The '+5% floor' activation written below is now the **v2 paper test** (trail at max(hw − 1.5 × ATR5, VWAP, last higher low)).
+> - **Stall exit (v2 test only):** 14 min AND hw < +1% AND (price < VWAP OR below the entry bar's low). v1 unchanged.
+> - **Recovery (v2 test only):** a sweep of a known low by < 1% that is reclaimed within 1–2 bars counts as support. The −3.45% decision point stays Kevin-locked.
+> - **Approval-required orders** and **60-second near-stop watch**: see risk-rules.md revisions.
+
+
 Every manage fire (09:30–15:59 ET, including while the book is flat during
 the buy window) follows the same order. Skip no step. Budget time so
 protection, the bank check, and the −5% backstop always run even if later

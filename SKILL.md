@@ -71,6 +71,7 @@ RISK-ON (x1.0), CONSTRUCTIVE (x0.75), CAUTION (x0.5), DEFENSIVE (x0, no new long
 ## 2. Setup read
 - With a chart image: trend, support/resistance, 20/50/200-week MAs, volume, 2-3 scenarios with probabilities (technical-analyst skill if installed).
 - Without a chart: `get_equity_quotes` for the price, `get_equity_historicals` or `get_equity_technical_indicators` if useful, and confirm the stop sits below real support, not an arbitrary %.
+- **Stop first, then entry.** Put the stop *beyond* the obvious level (structural low minus a few ticks or ~0.35 x 5-minute ATR, stepped past the nearest .00/.50), never exactly at the morning low where stops cluster. The highest allowed buy is then stop / 0.95 (`gecko_size.py` prints `max_entry_for_cap` and fails the gate above it). If the live price is higher, wait or skip; never widen the stop past 5%.
 - `get_earnings_calendar`: flag earnings in the next 7 days.
 
 ## 3. Size and gate
@@ -78,9 +79,9 @@ RISK-ON (x1.0), CONSTRUCTIVE (x0.75), CAUTION (x0.5), DEFENSIVE (x0, no new long
 python3 scripts/gecko_size.py --account EQUITY --entry ENTRY --stop STOP --target TARGET \
   --regime-mult MULT --open-risk-pct OPEN [--json]
 ```
-Defaults: 1% base risk, 20% max position, 6% max portfolio heat, 2.0 minimum reward:risk, 2% hard risk ceiling. Use whole shares for limit orders.
+Defaults: 1% base risk, 20% max position, 6% max portfolio heat, 2.0 minimum reward:risk, 2% hard risk ceiling, 5% max stop distance (`--max-stop-pct`). Use whole shares for limit orders.
 
-The gate FAILS on: reward:risk below minimum, DEFENSIVE regime, heat above cap, risk above 2%, or zero shares. A FAIL means no order; explain each reason and what would fix it.
+The gate FAILS on: reward:risk below minimum, DEFENSIVE regime, heat above cap, risk above 2%, stop more than 5% below entry, or zero shares. A FAIL means no order; explain each reason and what would fix it.
 
 ## 4. Trade ticket
 
@@ -137,15 +138,38 @@ These override every other line in procedures, config and helpers:
 1. **Protective stop** on every whole-share fill: `stop_limit` with trigger `entry × 0.955` (round up) and limit `entry × 0.95` (round down). Verify with `reconcile.py stopargs` before sending and `verify-protection` after.
 2. **−5% market-sell backstop** every fire (`risk_floors.py trade-cap`) if the bid is at or below entry × 0.95.
 3. **5% max loss per trade** from entry. No stop or limit below entry × 0.95.
-4. **50% bank stop.** Baseline = live-account equity at measurement start, plus later deposits, minus withdrawals. Stop line = 50% of baseline. A bad or zero portfolio read never trips. On a trip: flatten, cancel all orders, idle until Kevin restarts (`risk_floors.py bank-restart`).
+4. **20% bank stop, 10% tripwire** (Kevin 2026-11-17 20:06 ET; was 50%). Baseline = live-account equity at measurement start, plus later deposits, minus withdrawals. Tripwire at 90% of baseline: alert Kevin and halve size (`sizeMultiplier` 0.5) until he reviews. Stop line = 80% of baseline. A bad or zero portfolio read never trips. On a trip: flatten, cancel all orders, idle until Kevin restarts (`risk_floors.py bank-restart`).
 5. **Flatten before the close** (15:50, 15:55 backup). Nothing overnight.
-6. **Cash equity longs only.** No margin, options, shorts or crypto.
+6. **Equity longs only, never borrow.** The live account is `limited_margin`: it may buy with unsettled sale proceeds, but never borrow, never create a debit, never short, and no options or crypto (the connector allows them; SILAS must not). Each fire, `get_accounts` must show `limited_margin`; if not, disable same-day recycling and size from settled cash only.
 7. **Kevin-only** arm, disarm, pause and post-bank-stop restart.
-8. **Day kill switch:** 2 consecutive losing stops or a −5% day → no new buys that day; exits only.
+8. **Day kill switch:** 2 consecutive losing stops or a −3% day → no new buys that day; exits only.
 9. **Protect first**, every fire 09:30–16:00, from a fresh broker read this fire. If a whole-share position can't be protected after one retry, exit it. No new buys while protection is unverified.
 10. **Broker truth.** Positions and open orders come only from this fire's broker reads. The state file is a log.
+11. **Risk-based size.** Size every buy with `discretion.py size --equity --cash [--size-mult]`: 1% of equity at risk to the −5% stop, 2% max, capped at 95% of buying power. Skip a name when one share risks more than 2%.
+12. **Order-check hard stop.** Any `order_checks` text mentioning a debit, excess obligation, good-faith or freeriding violation, a 90-day restriction, or day trading/PDT: place nothing more and escalate to Kevin.
 
-Details: [Risk rules](reference/risk-rules.md).
+Details: [Risk rules](reference/risk-rules.md). Realized losses can exceed 5%: a stop-limit can go unfilled through a gap or an LULD halt.
+
+## Evaluation revisions (2026-11-17 20:06 ET)
+From `reports/Gordongecko strategy evaluation.md` (deep research; bank stop confirmed by Kevin). These supersede any older line below or in procedure files:
+
+| Rule | Now | Was |
+|---|---|---|
+| Sizing | 1% risk, 2% max, 95% of buying power cap | full cash across slots |
+| Bank stop | -20% stop, -10% tripwire (alert + half size) | -50% |
+| Round-trip cap | 4 a day | 9 |
+| Day loss limit | -3% | -5% |
+| Spread filter | <= 1.0% | <= 8% |
+| Dilution veto | any effective shelf/ATM with remaining capacity | filing in last 30 days |
+| Regime gate | no new buys when `gecko_regime.py` says DEFENSIVE/UNKNOWN; log the label on every trade | none |
+| Stop monitoring | bid within 1% of trigger, or stop triggered unfilled -> 60-second watch; exit with a marketable limit at bid x 0.97 after checking halt state | 5-minute backstop, raw market sell |
+| Success measure | expectancy: win %, avg win %, avg loss %, payoff ratio, net $/trade after spread, stop slippage; scale or promote nothing before 100 live trades beat break-even win % = avgLoss/(avgWin+avgLoss) | 'decision success' 25.8% -> 30.8% |
+| Tuning / promotion guard | 30 trades | 6 / 10 trades |
+| Approval-required orders | occupy a slot, never duplicated, cancelled at the next fire if pending (15:50 latest); a pending protective stop = unprotected (floor 9) | not handled |
+| Wash sales | flag any re-buy within 30 days of a losing exit in the recap | not tracked |
+| PDT | rule ended 2026-06-04 (FINRA RN 26-10; SEC Rel. 34-105226); the RT cap is a strategy setting | - |
+
+**v2 paper test (side by side).** Until Kevin decides after >= 100 paper trades, run two paper books every paper session: `v1_current` (rules above) and `v2_evidence` (`config.paperVariants2026.v2_evidence`: ORB as primary setup, $5 price floor + 1M average daily volume, day-move 8-15%, TA gate = RVOL + VWAP + volume shape, structural/ATR stop stepped past round numbers, stop-limit trigger 0.96, trail from +5% at max(hw - 1.5 x ATR5, VWAP, last higher low), conditional stall exit, swept-low support in recovery, flatten sub-$3 at 15:30). Keep the books apart with `PAPER_BROKER=${DESK_DATA}/paper-mode/broker_v1.json` or `broker_v2.json`. Report both side by side. v2 never trades live until Kevin approves it.
 
 ## Current risk profile: `higher-risk+15`
 Applied 2026-11-17 09:29 ET after Kevin confirmed a 15% wider risk tolerance. Supersedes older −2%/−3% and 4/5–5/5 lines deeper in some procedure files. Hard floors unchanged.
@@ -156,16 +180,16 @@ Applied 2026-11-17 09:29 ET after Kevin confirmed a 15% wider risk tolerance. Su
 | Recovery hold threshold | 26 before 10:00, 38 from 10:00 |
 | TA | 3 of 5, all day |
 | After-10:00 A+ entries | watchlist score ≥ 0.51, TA ≥ 3/5, until 13:30, max 3, never a re-entry |
-| Round-trip cap | 9 (max 2 slots) |
+| Round-trip cap | 4 (max 2 slots; was 9) |
 | Stall exit | 14 minutes if high-water < +1% |
 | Take-profit floor | 5% (trailing lock from +2%) |
 | Price floor | $1.00 |
-| Sizing | full cash across free slots |
+| Sizing | 1% risk per trade, 2% max (was full cash) |
 | Re-buy after a losing exit | never, same day (recycling a winner is allowed) |
 
-`desk_learn.py` must not tune the guarded knobs (stall minutes, TA count, recovery threshold) until there are at least **6 live trades dated on/after 2026-11-17** under this profile. The decision point stays Kevin-locked at −3.45%. See [Self-learning](reference/self-learning.md).
+`desk_learn.py` must not tune the guarded knobs (stall minutes, TA count, recovery threshold) until there are at least **30 live trades dated on/after 2026-11-17** under this profile. The decision point stays Kevin-locked at −3.45%. See [Self-learning](reference/self-learning.md).
 
-Prime directive: **+5 percentage points of decision success** vs baseline 25.8% (goal 30.8%). An entry is correct if the round trip finished green; a loss exit is correct if price did not reclaim entry for the rest of the session. Daily target +5% of start bank is a goal, not a reason to loosen a floor. At ≥ +5%, protect mode locks a +3% floor and allows only A+ adds.
+Prime directive: **positive expectancy after costs**, proven over >= 100 live trades (see evaluation revisions). 'Decision success' (baseline 25.8%, goal 30.8%; an entry is correct if the round trip finished green, a loss exit is correct if price did not reclaim entry for the rest of the session) stays as a secondary diagnostic only. At a 26-31% win rate, winners must average 2.25-2.9x the size of losers just to break even. Daily target +5% of start bank is a goal, not a reason to loosen a floor. At ≥ +5%, protect mode locks a +3% floor and allows only A+ adds.
 
 ## Daily loop (weekdays)
 One routine every 5 minutes, 05:30–18:15 ET (`CRON_TZ=America/New_York */5 5-18 * * 1-5`). Each fire reads the dispatcher (`desk.md`) and runs `desk_clock.py next` for phase, paths and mode (`paper` or `live`). Idle fires are silent.
@@ -186,9 +210,9 @@ Full timetable: [Schedule and phases](reference/schedule-and-phases.md).
 
 ## Entries, TA, manage, recovery
 - **Live setups** (09:35–10:00): `gap_and_go`, `early_momentum`. After 10:00 only the A+ path.
-- **Hard filters:** day-move 8–25% (8–15% ranks first), RVOL ≥ 1.75, time-of-day liquidity, spread, bid-to-stop anchored at ask × 0.98 (`bidToStopPct` −2.0), $1 floor, dilution/offering veto, merger/tender veto, no same-symbol re-buy after a losing exit today.
+- **Hard filters:** day-move 8–25% (8–15% ranks first), RVOL ≥ 1.75, time-of-day liquidity, spread ≤ 1.0%, bid-to-stop anchored at ask × 0.98 (`bidToStopPct` −2.0), $1 floor, dilution veto (offerings plus any effective shelf/ATM with capacity), merger/tender veto, regime not DEFENSIVE, no same-symbol re-buy after a losing exit today.
 - **TA (5 checks, need 3):** volume shape, StochRSI, session VWAP, Bollinger 20/2, Fibonacci. Skip if data is incomplete. Prefer price ≥ VWAP; don't chase a first-5-minute peak that already lost the opening-range high or VWAP.
-- **On every fill:** place the hard stop in the same tool sequence, then size a dynamic target with `tp_model.py` (floor 5%). Trail from +2%. Never leave a take-profit and a stop resting together.
+- **On every fill:** place the hard stop in the same tool sequence, then size a dynamic target with `tp_model.py` (floor 5%). v1 trails from +2% (`tpModel.params.trailActivatePct` 2.0); the 'from +5%' wording in `manage-and-recovery.md` is the v2 test. Never leave a take-profit and a stop resting together.
 - **While bid ≤ entry × 0.9655:** `recovery.py score` every fire. Exit on the first score under the threshold (26 / 38). Otherwise hold to the hard stop.
 - **Fractional lots** (only when one share costs more than available cash and the name is fractional-eligible): Robinhood rejects resting stop-limits on them, so watch a virtual stop about every 60 seconds; max one fractional position.
 
@@ -197,7 +221,7 @@ See [Entries and TA](reference/entries-and-ta.md) and [Manage and recovery](refe
 ## Reporting
 Quiet except:
 1. **One** pre-open paper summary (`PAPER — …`); prefix `ESCALATION: ` if a self-test failed.
-2. **One** daily live recap (`LIVE — …`): wins, losses, start $ → final $, net, decisions right vs the 25.8% / 30.8% goal.
+2. **One** daily live recap (`LIVE — …`): wins, losses, start $ → final $, net, win %, avg win/loss %, payoff ratio, net $/trade, stop slippage, regime label, wash-sale flags (decision success as a footnote).
 3. Unfixable errors, guard trips, bank stop and material rule changes, immediately.
 
 No duplicates; silent on idle fires. Claim the recap with `desk_clock.py report-claim`; if `ok` is false, send nothing. Template: [Reporting](reference/reporting.md).

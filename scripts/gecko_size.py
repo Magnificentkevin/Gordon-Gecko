@@ -69,8 +69,10 @@ def size(args):
         reasons.append(f"Portfolio heat would be {heat_after:.2f}%, above {args.max_heat_pct:g}% cap")
     if shares <= 0:
         reasons.append("Position rounds to zero shares (try --fractional or a tighter stop)")
-    if stop_pct > 10:
-        warnings.append(f"Stop is {stop_pct:.1f}% away; wide stops shrink size a lot")
+    max_entry = floor_to(stop / (1 - args.max_stop_pct / 100), 2)
+    if stop_pct > args.max_stop_pct:
+        reasons.append(f"Stop is {stop_pct:.2f}% below entry, over the {args.max_stop_pct:g}% cap: keep the stop, "
+                       f"buy at or below ${max_entry:,.2f} instead (stop first, then entry)")
 
     return {
         "verdict": "FAIL" if reasons else "PASS",
@@ -79,6 +81,7 @@ def size(args):
         "entry": args.entry,
         "stop": stop,
         "stop_pct": round(stop_pct, 2),
+        "max_entry_for_cap": max_entry,
         "target": args.target,
         "reward_risk": round(rr, 2) if rr is not None else None,
         "base_risk_pct": args.risk_pct,
@@ -108,6 +111,8 @@ def main():
     p.add_argument("--open-risk-pct", type=float, default=0.0, help="Risk already open, %% of equity")
     p.add_argument("--max-heat-pct", type=float, default=6.0)
     p.add_argument("--min-rr", type=float, default=2.0)
+    p.add_argument("--max-stop-pct", type=float, default=5.0,
+                   help="Max stop distance %% (default 5, matching the SILAS hard floor). Set the stop first; the entry must fit")
     p.add_argument("--fractional", type=int, default=0, metavar="DECIMALS",
                    help="Allow fractional shares to this many decimals (broker must support it)")
     p.add_argument("--json", action="store_true")
@@ -130,6 +135,7 @@ def main():
         print(f"  ! {w}")
     print(f"Buy {r['shares']:g} shares @ ${r['entry']:,.2f}  stop ${r['stop']:,.2f} ({r['stop_pct']}%)"
           + (f"  target ${r['target']:,.2f}  R:R {r['reward_risk']}" if r['target'] else ""))
+    print(f"Max entry that keeps the stop within {args.max_stop_pct:g}%: ${r['max_entry_for_cap']:,.2f}")
     print(f"Position ${r['position_value']:,.2f} ({r['position_pct']}% of account), "
           f"limited by {r['binding_constraint']}")
     print(f"Risk ${r['dollar_risk']:,.2f} ({r['risk_pct_of_account']}%), "
