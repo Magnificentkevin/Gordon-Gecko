@@ -46,6 +46,10 @@ Python 3.9+ (3.11+ for SILAS helpers). No API keys.
 - Limit and stop orders take whole shares only. Fractional shares only on market orders in regular hours.
 - Cash equity longs only in both modes: no options, shorts, margin borrowing or crypto.
 
+**Excluded holdings (Kevin 2026-11-18 19:03 ET):** `config.excludedSymbols` (currently `ANT`, the Anthropic share) are personal holdings kept separate from SILAS. SILAS never buys, sells, stops, protects, flattens, sizes against, or counts them in the bank baseline. `risk_floors.py` and `reconcile.py` filter them out of positions and orders; pass `--positions` and `--quotes` to `bank-check` so their value is deducted from equity. Never place or cancel an order in an excluded symbol from any SILAS fire. If Kevin asks for a trade in one, handle it separately with his explicit confirmation.
+
+**Live arming (Kevin 2026-11-18 19:03 ET):** Kevin armed SILAS live from Fri 2026-11-20, with the revised v1 rules on the account's cash excluding ANT (expected about $21). The bank baseline is reset that morning to cash after the ANT purchase. Kevin can pause, disarm or stop at any time by saying so.
+
 **Shared account warning:** while SILAS is armed it flattens every equity position in the account before the close (15:50 ET). A Mode A swing trade meant to be held overnight would be sold. Before placing a Mode A order, check whether SILAS is armed (`desk_clock.py next`, `liveMode.armed`); if it is, tell Kevin and ask whether this is a same-day trade.
 
 ---

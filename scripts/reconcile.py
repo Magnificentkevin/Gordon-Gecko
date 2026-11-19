@@ -123,11 +123,18 @@ def load_orders(paths):
         d = raw(p); d = d.get("data", d) if isinstance(d, dict) else d
         rows = d.get("orders", d.get("results", [])) if isinstance(d, dict) else d
         for o in rows: seen[o["id"]] = o
-    return list(seen.values())
+    ex = excluded_symbols()
+    return [o for o in seen.values() if str(o.get("symbol", "")).upper() not in ex]
+def excluded_symbols():
+    """Symbols walled off from SILAS (Kevin 2026-11-18 19:03 ET: Anthropic share kept separate). Config excludedSymbols + env SILAS_EXCLUDED."""
+    ex = {str(x).upper() for x in ((cfg() or {}).get("excludedSymbols") or [])}
+    ex |= {x.strip().upper() for x in (_os.environ.get("SILAS_EXCLUDED") or "").split(",") if x.strip()}
+    return ex
 def load_positions(p):
     d = raw(p); d = d.get("data", d)
     rows = d.get("positions", d.get("results", [])) if isinstance(d, dict) else d
-    return {r["symbol"]: r for r in rows if f(r.get("quantity")) > 0}
+    ex = excluded_symbols()
+    return {r["symbol"]: r for r in rows if f(r.get("quantity")) > 0 and str(r.get("symbol", "")).upper() not in ex}
 def load_quotes(p):
     if not p: return {}
     d = raw(p); d = d.get("data", d); out = {}

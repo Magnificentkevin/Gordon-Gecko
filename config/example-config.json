@@ -2086,5 +2086,9 @@
    "Stage B count at 09:35",
    "F curve calibration"
   ]
- }
+ },
+ "excludedSymbols": [
+  "ANT"
+ ],
+ "excludedSymbolsNote": "Kevin 2026-11-18 19:03 ET: the Anthropic (ANT) share is a separate personal holding. SILAS never buys, sells, protects, flattens, sizes against, or counts ANT toward the bank baseline. Enforced in risk_floors.py (positions/orders/bank-check) and reconcile.py (load_positions/load_orders)."
 }

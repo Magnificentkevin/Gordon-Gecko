@@ -56,14 +56,25 @@ def data(o): return (o or {}).get("data", o or {}) if isinstance(o, dict) else {
 def cfg(): return jload(CFG, {}) or {}
 def bs_cfg(C): return C.get("bankStop") or {}
 def state_file(C): return bs_cfg(C).get("stateFile") or "/workspace/robinhood-fable-agent/data/equity-paper/bank-stop.json"
-def positions(raw):
+def excluded_symbols():
+    """Symbols walled off from SILAS (Kevin 2026-11-18 19:03 ET: Anthropic share kept separate). Config excludedSymbols + env SILAS_EXCLUDED."""
+    import os
+    ex = {str(x).upper() for x in (cfg().get("excludedSymbols") or [])}
+    ex |= {x.strip().upper() for x in (os.environ.get("SILAS_EXCLUDED") or "").split(",") if x.strip()}
+    return ex
+def positions_all(raw):
     d = data(jload(raw, {}) if isinstance(raw, str) else raw)
     rows = d.get("positions") or d.get("results") or (d if isinstance(d, list) else [])
     return [r for r in rows if num(r.get("quantity")) > 0]
+def positions(raw):
+    ex = excluded_symbols()
+    return [r for r in positions_all(raw) if str(r.get("symbol", "")).upper() not in ex]
 def orders(raw):
     if not raw: return []
     d = data(jload(raw, {}) if isinstance(raw, str) else raw)
-    return d.get("orders") or d.get("results") or (d if isinstance(d, list) else [])
+    rows = d.get("orders") or d.get("results") or (d if isinstance(d, list) else [])
+    ex = excluded_symbols()
+    return [o for o in rows if str(o.get("symbol", "")).upper() not in ex]
 OPEN = ("queued", "unconfirmed", "confirmed", "partially_filled", "pending", "new")
 def quotes(raw):
     d = data(jload(raw, {}) if isinstance(raw, str) else raw); out = {}
@@ -122,8 +133,20 @@ def tripped(C):
     s = status_of(C); return bool(s.get("tripped")), s
 def cmd_bank_check(a):
     C = cfg(); now = now_of(a); base, flows = baseline(C); pct = threshold_pct(C); eq, src = total_equity(a.portfolio)
+    ex = excluded_symbols(); ex_val = 0.0; ex_note = None
+    if ex and eq is not None:
+        if a.positions:
+            qmap = quotes(a.quotes) if a.quotes else {}
+            for r in positions_all(a.positions):
+                sym = str(r.get("symbol", "")).upper()
+                if sym in ex:
+                    px = qmap.get(sym) or num(r.get("price")) or num(r.get("average_buy_price"))
+                    ex_val += num(r.get("quantity")) * (px or 0)
+            eq = round(eq - ex_val, 2); src += f" minus excluded {sorted(ex)} ${ex_val:.2f}"
+        else:
+            ex_note = f"excludedSymbols {sorted(ex)} configured but --positions not given: equity may include them"
     line = round(base * pct / 100, 2); was, rec = tripped(C)
-    out = {"equityUsd": eq, "equitySource": src, "baselineUsd": base, "cashFlows": flows, "thresholdPct": pct, "stopAtOrBelowUsd": line,
+    out = {"excludedSymbols": sorted(ex), "excludedValueUsd": round(ex_val, 2), "excludedNote": ex_note, "equityUsd": eq, "equitySource": src, "baselineUsd": base, "cashFlows": flows, "thresholdPct": pct, "stopAtOrBelowUsd": line,
            "drawdownPct": (round((eq / base - 1) * 100, 2) if eq is not None and base else None), "alreadyTripped": was}
     if eq is None or eq <= 0:
         out.update(ok=None, why="portfolio unreadable / zero — re-read get_portfolio; do NOT trip on a bad read"); print(json.dumps(out)); return 2
@@ -174,7 +197,7 @@ def cmd_flow(a):
 def main(argv=None):
     ap = argparse.ArgumentParser(); sp = ap.add_subparsers(dest="cmd", required=True)
     x = sp.add_parser("trade-cap"); x.add_argument("--positions", required=True); x.add_argument("--quotes", required=True); x.add_argument("--orders"); x.set_defaults(fn=cmd_trade_cap)
-    x = sp.add_parser("bank-check"); x.add_argument("--portfolio", required=True); x.add_argument("--apply", action="store_true"); x.add_argument("--now"); x.set_defaults(fn=cmd_bank_check)
+    x = sp.add_parser("bank-check"); x.add_argument("--portfolio", required=True); x.add_argument("--positions"); x.add_argument("--quotes"); x.add_argument("--apply", action="store_true"); x.add_argument("--now"); x.set_defaults(fn=cmd_bank_check)
     x = sp.add_parser("bank-status"); x.set_defaults(fn=cmd_bank_status)
     x = sp.add_parser("bank-flat-done"); x.add_argument("--positions", required=True); x.add_argument("--orders", required=True); x.add_argument("--now"); x.set_defaults(fn=cmd_flat_done)
     x = sp.add_parser("bank-restart"); x.add_argument("--by", required=True); x.add_argument("--now"); x.set_defaults(fn=cmd_restart)
