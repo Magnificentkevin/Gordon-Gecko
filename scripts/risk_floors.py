@@ -24,7 +24,8 @@ ACCOUNT = _broker_account(required=False)
        exit 0 = nothing breached; exit 8 = `exits[]` to run NOW (cancel `cancelOrderIds` → verify → place `sell` kwargs).
 
 2) BANK DRAWDOWN SYSTEM STOP (Kevin 2026-11-10 16:24 ET "Only stop automatic mode when total bank losses 50%")
-   live total equity (get_portfolio total_value = cash + positions) ≤ 50% of the baseline bank → SYSTEM STOP:
+   live total equity (get_portfolio total_value = cash + positions) ≤ bankStop.thresholdPct of the baseline bank → SYSTEM STOP
+   (code floor 50%; config may only tighten it — Kevin set 80%, i.e. a −20% stop, with a 90% tripwire, Nov 2026):
    flatten safely, cancel open orders, no paper→live switch, no new trades, until Kevin explicitly restarts.
    baseline = config bankStop.baselineUsd (set from live-account equity at the measurement start; plus later owner cash flows) + deposits − withdrawals dated on/after baselineDate
    (config deposits[] + week-desk.json deposits[] + bankStop.cashFlows[], same day+amount counted once). The only other system stop is Kevin's own command (desk.paused / liveMode.armed false).
@@ -162,6 +163,7 @@ def cmd_bank_check(a):
     if tw and eq is not None and not (hit or was):
         tw_line = round(base * tw / 100, 2); tw_hit = eq <= tw_line + 1e-9
         out.update(tripwirePct=tw, tripwireAtOrBelowUsd=tw_line, tripwire=tw_hit, sizeMultiplier=(0.5 if tw_hit else 1.0))
+        rec["tripwireActive"] = tw_hit   # persisted so discretion.py size halves size even if --size-mult is forgotten
         if tw_hit and not rec.get("tripwireAlertedAt"):
             rec["tripwireAlertedAt"] = iso(now)
             out["tripwireEscalation"] = (f"TRIPWIRE — live equity ${eq:.2f} ≤ {tw:g}% of baseline ${base:.2f} (line ${tw_line:.2f}): "

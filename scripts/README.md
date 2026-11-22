@@ -148,6 +148,34 @@ bash scripts/paper_setup.sh <start_cash_usd> [baseline_date]
 
 Builds a PAPER-ONLY desk under `/workspace` from this repo: paper config (`executionMode=paper`, `liveMode.armed=false`), bank-stop baseline = start cash, fresh paper broker book. Live order tools stay blocked by `paper_guard.py`.
 
+### paper_random.py (v0 random-entry baseline)
+
+```
+python3 paper_random.py tick --date D --quotes <get_equity_quotes raw> --shortlist <symbols that passed the scanner's hard filters> [--bars5 RAW] [--now ISO]
+python3 paper_random.py summary --date D
+python3 paper_random.py compare --v1 <v1 round trips JSON> [--since YYYY-MM-DD]
+python3 paper_random.py edge --trades <round trips JSON> [--stop-pct 5]
+```
+
+A third paper book beside v1 and v2. It trades the same shortlist as v1 with the same sizing, caps, kill switch and exits, but picks
+which name and when at random (seeded by date and minute, so a day replays the same). Run `tick` at the end of each live manage fire,
+after `paper_shadow.py`. `compare` says whether v1 beats random (t >= 2 on the difference). `edge` is the promotion check: mean R,
+lower 95% bound and how many trades it would take to prove the edge. Same isolation as `paper_shadow.py`: no broker calls, writes only
+under `paperRandom.stateDir`.
+
+### gecko_size.py / gecko_regime.py (Trade Planner)
+
+`gecko_size.py` exits 0 on PASS, 2 on FAIL and 1 on bad input. It FAILs when there is no `--target` (pass `--allow-no-target`
+to skip the reward:risk check on purpose), when `--regime-mult` is outside 0-1, and when effective risk (base x regime) is above 2%.
+
+`gecko_regime.py` sorts the breadth file by date and returns `UNKNOWN` (multiplier 0) when the data is more than 5 days old; the
+stale read is kept in `label_from_data`. `--as-of YYYY-MM-DD` scores a past date for replays.
+
+### Tests and the validation lab
+
+`python3 -m unittest discover -s tests -v` runs the regression tests for these fixes. `validation/` holds the cleanroom and 12-month
+stress-test scripts; see `validation/README.md` before promoting any rule change.
+
 ## Broker call shape
 
 Use the broker MCP (e.g. Robinhood) with `account_number` set from
