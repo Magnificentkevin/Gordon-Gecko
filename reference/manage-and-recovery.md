@@ -46,7 +46,9 @@ work is cut short.
 9. **Entries** if the clock and the gate allow (see
    [Entries and TA](entries-and-ta.md)).
 10. **Paper shadow tick** when live: `paper_shadow.py tick` with a short
-    budget (~20s).
+    budget (~20s). Then `paper_random.py tick --shortlist <names that passed
+    the scanner's hard filters this fire>` with the same quotes file: the v0
+    random-entry baseline that v1 has to beat before anything is promoted.
 11. Mark the fire done. Send nothing unless an escalation rule triggers.
 
 Immediately after every **new buy fill**, and before any other tool call,
