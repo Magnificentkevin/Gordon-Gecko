@@ -869,7 +869,7 @@
    "rule": "The desk never waits on Kevin for any decision: when a question would go to him it decides within the rules, proceeds and logs the decision (decided by desk). The system stops (desk.paused / liveMode.armed false) ONLY on Kevin's explicit command. The kill switch only blocks new buys for that day and resets next day (trading rule, not a system stop).",
    "systemStopsOnlyOn": [
     "Kevin's explicit command (desk.paused / liveMode.armed false)",
-    "bankStop: live total equity \u2264 50% of baseline (Kevin 2026-11-10 16:24 ET)"
+    "bankStop: live total equity \u2264 bankStop.thresholdPct of baseline (code floor 50%; set to 80% = \u221220% stop, Nov 2026)"
    ]
   },
   "autoLiveAtOpen": "Kevin 2026-11-10 16:09 ET (chat): \"Arm live at 9:30 am without live confirmation.\" (standing, every trading day)"
@@ -1407,7 +1407,7 @@
    "Kevin-only arm/disarm/pause",
    "some daily loss limit always on",
    "per-trade max loss 5% from entry (maxTradeLoss; stop never wider than \u22125%; trade-cap backstop)",
-   "bank drawdown system stop at \u226450% of baseline (bankStop)",
+   "bank drawdown system stop at \u2264 bankStop.thresholdPct of baseline (80%; code floor 50%)",
    "resting stop_limit hard stop on every whole-share position: trigger \u22124.5% / limit \u22125% (stopargs --entry + verify-protection)",
    "\u22122% recovery decision point fixed (Kevin only)"
   ],
@@ -1471,7 +1471,7 @@
   "authorizedBy": "Kevin 2026-11-10 16:24 ET: \"Only stop automatic mode when total bank losses 50%.\"",
   "onTrip": "flatten every position safely (cancel its stop \u2192 verify \u2192 market sell), cancel ALL open orders, write bank-flat-done; automatic mode OFF: no premarket paper, no 09:30 paper\u2192live switch, no new trades, every desk_clock fire idles 'bank_stop_tripped' until Kevin explicitly restarts (risk_floors.py bank-restart --by \"Kevin <words, time>\"). Escalation handed to the parent immediately.",
   "onlySystemStops": [
-   "this bank stop (equity \u2264 50% of baseline)",
+   "this bank stop (equity \u2264 bankStop.thresholdPct of baseline, 80%)",
    "Kevin's explicit command (desk.paused true / liveMode.armed false)"
   ],
   "notASystemStop": "daily kill switch (2 consecutive loss stops or \u22125% day) = day-only new-buy pause; resets next day",
@@ -1718,7 +1718,7 @@
    "bidToStop/spread/RVOL/liquidity/$1 floor/dilution/merger hard filters (bidToStopPct stays \u22122.0)",
    "full-cash sizing, max 2 slots",
    "no re-buy after a losing exit",
-   "50% bank stop (baseline = measurement-start equity + owner cash flows; stop line = 50% of baseline)",
+   "bank stop (baseline = measurement-start equity + owner cash flows; stop line = bankStop.thresholdPct of baseline, 80%)",
    "flatten before close",
    "no margin/options/shorts/crypto",
    "owner-only arm/disarm/pause",
@@ -2090,5 +2090,17 @@
  "excludedSymbols": [
   "ANT"
  ],
- "excludedSymbolsNote": "Kevin 2026-11-18 19:03 ET: the Anthropic (ANT) share is a separate personal holding. SILAS never buys, sells, protects, flattens, sizes against, or counts ANT toward the bank baseline. Enforced in risk_floors.py (positions/orders/bank-check) and reconcile.py (load_positions/load_orders)."
+ "excludedSymbolsNote": "Kevin 2026-11-18 19:03 ET: the Anthropic (ANT) share is a separate personal holding. SILAS never buys, sells, protects, flattens, sizes against, or counts ANT toward the bank baseline. Enforced in risk_floors.py (positions/orders/bank-check) and reconcile.py (load_positions/load_orders).",
+ "paperRandom": {
+  "enabled": true,
+  "stateDir": "/workspace/robinhood-fable-agent/data/equity-paper/random-baseline",
+  "startCashUsd": 100.0,
+  "entryStartEt": "09:35",
+  "noNewBuysAfterEt": "15:45",
+  "flattenEt": "15:50",
+  "maxPositions": 2,
+  "maxRoundTrips": 4,
+  "entryProbPerFire": 0.25,
+  "why": "v0 random-entry baseline (stress test 2026-11-22): same shortlist, sizing and exits as v1, random name and timing. v1 must beat it before anything is promoted."
+ }
 }

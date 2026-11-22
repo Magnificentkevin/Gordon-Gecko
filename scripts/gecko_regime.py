@@ -48,7 +48,8 @@ def load_rows(args):
             text = fh.read()
     else:
         text = fetch_text(args.url)
-    rows = list(csv.DictReader(io.StringIO(text)))
+    rows = [r for r in csv.DictReader(io.StringIO(text)) if (r.get("Date") or "").strip()]
+    rows.sort(key=lambda r: r["Date"][:10])   # oldest first, whatever order the file uses
     if len(rows) < 10:
         raise ValueError("Not enough rows in breadth data")
     return rows
@@ -62,7 +63,10 @@ def is_true(value):
     return str(value).strip().lower() in ("true", "1", "yes")
 
 
-def assess(rows):
+MAX_AGE_DAYS = 5
+
+
+def assess(rows, today=None):
     last = rows[-1]
     prior = rows[-6]  # five sessions back
     ma8 = as_float(last, "Breadth_Index_8MA")
@@ -95,11 +99,18 @@ def assess(rows):
             break
 
     data_date = last["Date"]
-    age_days = (date.today() - datetime.strptime(data_date[:10], "%Y-%m-%d").date()).days
+    age_days = ((today or date.today()) - datetime.strptime(data_date[:10], "%Y-%m-%d").date()).days
+    stale = age_days > MAX_AGE_DAYS
+    raw_label = label
+    if stale:   # fail closed: old breadth data is not a regime read
+        label, mult = "UNKNOWN", 0.0
+        guidance = (f"Breadth data is {age_days} days old (limit {MAX_AGE_DAYS}). Treat as DEFENSIVE: "
+                    f"no new longs until fresh data loads (stale read was {raw_label}).")
     return {
         "data_date": data_date,
         "data_age_days": age_days,
-        "stale": age_days > 5,
+        "stale": stale,
+        "label_from_data": raw_label,
         "points": points,
         "regime": label,
         "risk_multiplier": mult,
@@ -113,10 +124,18 @@ def main():
     parser.add_argument("--url", default=DEFAULT_URL)
     parser.add_argument("--csv", help="Local breadth CSV instead of downloading")
     parser.add_argument("--json", action="store_true", help="Print JSON only")
+    parser.add_argument("--as-of", help="YYYY-MM-DD: score as of this date (replays and tests). Default today")
     args = parser.parse_args()
 
     try:
-        result = assess(load_rows(args))
+        rows = load_rows(args)
+        today = None
+        if args.as_of:
+            today = datetime.strptime(args.as_of, "%Y-%m-%d").date()
+            rows = [r for r in rows if r["Date"][:10] <= args.as_of]
+            if len(rows) < 10:
+                raise ValueError("Not enough rows on or before --as-of")
+        result = assess(rows, today)
     except Exception as exc:  # fail closed: unknown regime means no new risk
         result = {"regime": "UNKNOWN", "risk_multiplier": 0.0,
                   "guidance": f"Could not read breadth data ({exc}). Treat as DEFENSIVE.",

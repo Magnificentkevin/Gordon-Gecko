@@ -10,6 +10,8 @@ Examples:
   python3 gecko_size.py --account 10000 --entry 155 --atr 3.2 --atr-mult 2 \
       --regime-mult 0.75 --open-risk-pct 2.5 --fractional 4 --json
 
+Exit codes: 0 PASS, 2 FAIL (gate said no), 1 bad input.
+
 Standard library only. Educational tool, not financial advice.
 """
 import argparse
@@ -25,6 +27,14 @@ def floor_to(value, decimals):
 
 def size(args):
     reasons, warnings = [], []
+
+    if args.account <= 0:
+        raise ValueError("Account equity must be above zero")
+    if args.entry <= 0:
+        raise ValueError("Entry must be above zero")
+    if not (0 <= args.regime_mult <= 1):
+        # gecko_regime.py only ever returns 0-1; anything above 1 would lift risk past the hard ceiling
+        raise ValueError(f"--regime-mult must be between 0 and 1 (got {args.regime_mult:g})")
 
     stop = args.stop
     if stop is None and args.atr:
@@ -58,13 +68,17 @@ def size(args):
             rr = (args.target - args.entry) / risk_per_share
             if rr < args.min_rr:
                 reasons.append(f"Reward:risk {rr:.2f} is below minimum {args.min_rr:g}")
-    else:
+    elif args.allow_no_target:
         warnings.append("No target given, so reward:risk was not checked")
+    else:
+        reasons.append("No target given: reward:risk can't be checked (pass --target, or --allow-no-target to skip)")
 
     if args.regime_mult <= 0:
         reasons.append("Market regime is DEFENSIVE/UNKNOWN: no new longs")
     if args.risk_pct > 2:
         reasons.append(f"Base risk {args.risk_pct:g}% exceeds the 2% hard limit")
+    if effective_risk_pct > 2 + 1e-9:
+        reasons.append(f"Effective risk {effective_risk_pct:g}% (base x regime) exceeds the 2% hard limit")
     if heat_after > args.max_heat_pct:
         reasons.append(f"Portfolio heat would be {heat_after:.2f}%, above {args.max_heat_pct:g}% cap")
     if shares <= 0:
@@ -111,6 +125,8 @@ def main():
     p.add_argument("--open-risk-pct", type=float, default=0.0, help="Risk already open, %% of equity")
     p.add_argument("--max-heat-pct", type=float, default=6.0)
     p.add_argument("--min-rr", type=float, default=2.0)
+    p.add_argument("--allow-no-target", action="store_true",
+                   help="Let the gate pass without a target (reward:risk unchecked). Off by default")
     p.add_argument("--max-stop-pct", type=float, default=5.0,
                    help="Max stop distance %% (default 5, matching the SILAS hard floor). Set the stop first; the entry must fit")
     p.add_argument("--fractional", type=int, default=0, metavar="DECIMALS",
@@ -124,9 +140,10 @@ def main():
         print(json.dumps({"verdict": "FAIL", "reasons": [str(exc)]}, indent=2))
         return 1
 
+    code = 0 if r["verdict"] == "PASS" else 2   # exit 2 = gate FAIL, so callers that check the exit code see it
     if args.json:
         print(json.dumps(r, indent=2))
-        return 0
+        return code
 
     print(f"Verdict: {r['verdict']}")
     for reason in r["reasons"]:
@@ -140,7 +157,7 @@ def main():
           f"limited by {r['binding_constraint']}")
     print(f"Risk ${r['dollar_risk']:,.2f} ({r['risk_pct_of_account']}%), "
           f"regime x{r['regime_multiplier']:g}, heat after trade {r['portfolio_heat_after_pct']}%")
-    return 0
+    return code
 
 
 if __name__ == "__main__":

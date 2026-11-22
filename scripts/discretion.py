@@ -135,7 +135,7 @@ def gate(a):
             _bc = (json.load(open(_os.environ.get("DISC_CONFIG") or _os.environ.get("RECONCILE_CONFIG") or "/workspace/robinhood-fable-agent/config/equity-morning-session.json")).get("bankStop") or {})
             _bs = json.load(open(_bc.get("stateFile") or "/workspace/robinhood-fable-agent/data/equity-paper/bank-stop.json")) if _bc.get("enabled", True) else {}
         except Exception: _bs = {}
-        if _bs.get("tripped"): reasons.append("bank_stop_tripped: live equity ≤ 50% of baseline — SYSTEM STOP, no new trades until Kevin restarts")
+        if _bs.get("tripped"): reasons.append("bank_stop_tripped: live equity at or below the bankStop line (config thresholdPct of baseline) — SYSTEM STOP, no new trades until Kevin restarts")
         prot = st.get("protection") or {}
         if prot and prot.get("buysAllowed") is False:
             reasons.append("unprotected_position: " + ",".join([u.get("symbol", "?") for u in (prot.get("unprotected") or [])] + [w.get("symbol", "?") for w in (prot.get("wrongType") or [])]) + " — protect first, no new buys")
@@ -281,7 +281,21 @@ def size(a):
         # qty = floor(equity × riskPct / (buy_limit − stop)), capped by cash × 0.95 / buy_limit; skip if 1 share > maxRiskPct of equity.
         rs = cfg().get("riskSizing", {}); rp = num(rs.get("riskPct"), 1.0); mx = num(rs.get("maxRiskPct"), 2.0); cf = num(rs.get("cashCapFrac"), 0.95)
         eq = a.equity if a.equity else num(s.get("startBank"), 0.0); cash = a.cash if a.cash is not None else eq
-        mult = a.size_mult if a.size_mult else 1.0
+        # SIZE MULTIPLIER (stress test 2026-11-22): fail closed. A forgotten --size-mult used to mean full size even with the
+        # bank tripwire hit. Now: read the tripwire from the bank-stop state file; take the SMALLER of that and --size-mult;
+        # clamp to 0-1 (a multiplier can only shrink risk). Pass --size-mult as tripwire × regime multiplier when both apply.
+        mult, mult_src = 1.0, "default"
+        try:
+            _bc = full_cfg().get("bankStop") or {}
+            _bs = json.load(open(_bc.get("stateFile") or "/workspace/robinhood-fable-agent/data/equity-paper/bank-stop.json")) if _bc.get("enabled", True) else {}
+        except Exception: _bs = {}
+        if _bs.get("tripwireActive"): mult, mult_src = 0.5, "bank tripwire (state file)"
+        if a.size_mult is not None:
+            if a.size_mult < mult: mult_src = "--size-mult"
+            mult = min(mult, a.size_mult)
+        mult = max(0.0, min(1.0, mult))
+        if mult <= 0:
+            print(json.dumps({"mode": s["mode"], "skip": True, "skipReason": "size_mult_zero", "sizeMult": mult, "sizeMultSource": mult_src}, indent=1)); return
         if eq <= 0 or risk <= 0:
             print(json.dumps({"mode": s["mode"], "skip": True, "skipReason": "no_equity_or_risk"}, indent=1)); return
         q_risk = int(math.floor(eq * rp / 100 * mult / risk)); q_cash = int(math.floor(cash * cf / a.buy_limit))
@@ -289,7 +303,8 @@ def size(a):
         skip = one_share_pct > mx or q < 1
         print(json.dumps({"mode": s["mode"], "sizing": "risk", "riskPct": rp * mult, "equityUsd": eq, "cashUsd": cash, "riskPerShare": round(risk, 4),
                           "qtyByRisk": q_risk, "qtyByCash": q_cash, "maxQty": 0 if skip else q, "riskUsd": round((0 if skip else q) * risk, 2),
-                          "skip": skip, "skipReason": ("one_share_exceeds_max_risk" if one_share_pct > mx else "rounds_to_zero") if skip else None}, indent=1)); return
+                          "skip": skip, "skipReason": ("one_share_exceeds_max_risk" if one_share_pct > mx else "rounds_to_zero") if skip else None,
+                          "sizeMult": mult, "sizeMultSource": mult_src}, indent=1)); return
     room = s["lockedPnlUsd"] - s["lockFloorUsd"]
     qmax = int(math.floor(room / risk)) if risk > 0 and room > 0 else 0
     print(json.dumps({"mode": "protect", "roomAboveFloorUsd": round(room, 4), "riskPerShare": round(risk, 4), "maxQty": qmax,
